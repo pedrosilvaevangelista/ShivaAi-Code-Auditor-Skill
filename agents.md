@@ -12,7 +12,7 @@ Este é o documento mais crítico do sistema. Conhecer e trabalhar *dentro* das 
 **O problema:** Projetos grandes têm centenas de arquivos. Não é possível ler todos simultaneamente com profundidade plena.
 
 **A solução operacional:**
-- **Nunca leia arquivos aleatoriamente.** Use `grep_search` primeiro para localizar os *sinks* perigosos (`exec`, `query`, `include`, `eval`, `deserialize`). Leia somente os arquivos que *contêm* esses sinks e os que *alimentam* esses sinks com dados externos.
+- **Nunca leia arquivos aleatoriamente.** Use `grep_search` primeiro para localizar os *sinks* perigosos (`exec`, `query`, `include`, `eval`, `deserialize`). **Regra de Estabilidade de Busca:** Realize buscas simples (strings liberais) e sequenciais (uma a uma). NÃO utilize Regex complexas com múltiplos pipes (`|`) nem execute inúmeras chamadas paralelas simultâneas de `grep_search`, pois isso sabota o limite de memória e invariavelmente trava (context canceled) a interface de análise. Leia somente os arquivos retornados.
 - Construa um **índice mental progressivo**: ao ler cada arquivo, registre mentalmente "este arquivo recebe entrada de X e passa para Y". Correlacione explicitamente antes de avançar.
 - Priorize a leitura pela Heurística de Stack (Fase 0 do PEI). Os arquivos de maior risco entram primeiro na janela de contexto, quando a memória ainda está fresca e limpa.
 

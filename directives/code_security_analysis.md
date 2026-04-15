@@ -385,39 +385,10 @@
 ### Fase 4 — Validação Ad-Hoc (Prova de Conceito)
 - Para vulnerabilidades que exigem confirmação contextual (formato de hash, estrutura de JWT, comportamento de regex), criar script Python efêmero em `.tmp/`, rodar, coletar evidência, descartar.
 
-### Fase 5 — Síntese do Dossiê de Elite (Dois Entregáveis)
+### Fase 5 — Síntese do Dossiê de Elite
+O relatório duplo foi aposentado pela poluição de contexto. O motor agora produz **um único documento completo** em cada auditoria.
 
-O relatório único e plano foi aposentado. O motor agora produz **dois documentos distintos** em cada auditoria:
-
----
-
-#### 5A. RELATÓRIO EXECUTIVO — `reports/executive_[project].md`
-*Audiência: CEO, CTO, Conselho, Equipe Jurídica. Zero código. Linguagem de risco de negócio.*
-
-Estrutura obrigatória:
-```
-# Relatório Executivo de Segurança — [Nome do Projeto]
-Data | Auditor | Classificação Geral de Risco
-
-## Resumo Executivo (máx. 150 palavras)
-O que foi encontrado, qual o risco real ao negócio, o que pode acontecer se não for corrigido.
-
-## Panorama de Risco
-Tabela com contagem de findings por severidade + score geral ponderado.
-
-## Os 3 Cenários de Ataque Mais Críticos
-Para cada um: O que pode acontecer, Quem seria afetado, Custo estimado de breach.
-## Impacto Financeiro Estimado
-Baseado em IBM Cost of a Data Breach Report 2024:
-- Custo médio global de breach: USD 4,88M
-- Multiplicar pelo nível de exposição encontrado.
-
-## Próximos Passos Recomendados (priorizados por risco)
-```
-
----
-
-#### 5B. RELATÓRIO TÉCNICO — `reports/codeanalisis_[project].md`
+#### RELATÓRIO TÉCNICO ÚNICO — `reports/codeanalisis_[project].md`
 *Audiência: Desenvolvedores, DevSecOps, Pentesters. Formato de elite. Cada finding é um caso completo.*
 
 **Estrutura obrigatória de cada finding:**
