@@ -1,6 +1,7 @@
 # SOP: Code Security Analysis (codeanalis skill)
 
-**Trigger Command:** `codeanalis [Project Path]`
+**Trigger Command (Análise Oficial):** `codeanalis [Project Path]`
+**Trigger Command (Evolução Neural):** `automelhorar` (Força o motor a conceber, postular e atualizar o próprio Dossiê Core com novas táticas de ataque não-convencionais).
 
 **Idioma Obrigatório:** Todos os relatórios, insights e entregáveis devem ser gerados em **Português (BR)**.
 
@@ -15,6 +16,9 @@
 1. **Ceticismo Contínuo:** Filtros, WAFs lógicos e Sanitizações nativas de desenvolvedores costumam ser falhos. Quebre-os destrinchando mentalmente o fluxo variável.
 2. **Heurística Guiada por Probabilidade Contextual:** Observe de forma analítica o ambiente (Stack do Backend, Bibliotecas Inclusas). Se o alvo usar `XmlSerializer` (.NET), a probabilidade de Deserialização Insegura é enorme. Se usar `child_process.exec` (Node), a probabilidade de RCE/Prototype Pollution sobe ao limite. Use essas probabilidades lógicas para direcionar e priorizar os corredores iniciais da bateria de análises.
 3. **Exaustão Tinta-por-Tinta (Cobertura Integral Acima de Tudo):** A heurística dita a *ordem* da prioridade, não o *fim* da análise. Nenhuma pasta pode ser ignorada baseada em "baixa probabilidade estatística" inicial. Vasculhe tudo depois dos alvos principais serem destruídos, caçando a falha ignorada pelo método convencional.
+4. **Psicanálise do Código (Modelagem Mental Inversa):** Procure as "cicatrizes" do desenvolvedor. Variáveis estranhas, comentários defensivos ou lógicas excessivamente complexas demonstram medo e desconhecimento. Ataque o que o desenvolvedor tentou desesperadamente proteger.
+5. **Correlação Lógica Cruzada (Efeito Borboleta):** Nunca dispense uma vulnerabilidade de "Low Impact". Acumule pequenos *leaks*, XSS informacionais e *Open Redirects*, unindo-os ativamente para forjar exploits devastadores em cadeia.
+6. **Taint Analysis Cognitivo Expresso:** Rastrei o dado da entrada (Source) à execução (Sink) não apenas lendo a linha atual, mas simulando o fluxo da RAM na própria mente, identificando corrupção do Input ao longo dos middlewares sem precisar rodar o sistema.
 
 ## Protocolo de Investigação Exploratória (PEI)
 
