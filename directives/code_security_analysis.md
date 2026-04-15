@@ -288,13 +288,66 @@
       - **Sozinho:** Baixo impacto. **Em chain com OAuth/SAML:** o `redirect_uri` malicioso rouba o authorization code. **Em chain com SSRF:** o redirect contorna validação de IP.
       - Reclassificar para Alto imediatamente se o sistema usa OAuth.
 
+30. **LDAP Injection:** *(Adicionado - automelhorar v2.2)*
+    - Aplicações enterprise que integram com Active Directory ou LDAP para autenticação são vulneráveis quando o input do usuário é concatenado diretamente em queries LDAP.
+    - **Bypass de autenticação clássico:**
+      - Username: `*)(uid=*))(|(uid=*`, Password: qualquer coisa → a query LDAP resultante casa com qualquer usuário.
+      - Caracteres especiais LDAP: `*`, `(`, `)`, `\`, `NUL`, `/`.
+    - **Impacto: dump do diretório:** queries como `(uid=*)` retornaem todos os objetos do LDAP, incluindo hashes de senha e atributos sensíveis.
+    - **`grep_search` por:** `ldap_search(`, `ldap_bind(`, `LdapConnection`, `DirectorySearcher`, `ldap.search(`, `ActiveDirectory`. Verificar se o input é sanitizado com `ldap_escape()` ou equivalente antes de qualquer operação de diretório.
+    - **Severidade:** Crítica quando permite bypass de autenticação. Alta quando permite enumeração do diretório.
+
+31. **CRLF Injection / HTTP Response Splitting:** *(Adicionado - automelhorar v2.2)*
+    - Quando input do usuário é refletido em headers HTTP sem remover `\r\n` (CR LF), o atacante pode injetar headers adicionais ou dividir a resposta HTTP em duas.
+    - **Vetores de impacto:**
+      - **Header Injection:** injetar `Set-Cookie: session=malicioso` ou `Location: http://evil.com`.
+      - **Cache Poisoning:** envenenar caches intermediários com uma resposta forjada.
+      - **XSS via Response Splitting:** criar uma segunda resposta HTTP com corpo HTML/JS controlado.
+    - **Payload básico:** `\r\nX-Injected-Header: value` ou `%0d%0aSet-Cookie:admin=true`.
+    - **`grep_search` por:** input do usuário passado para `header(`, `setHeader(`, `Response.AddHeader(`, `addHeader(`, `resp.writeHead(` sem filtragem de `\r\n`.
+    - **Chain exploit:** CRLF + Cache Poisoning = XSS persistente servido a todos os usuários que visitam a página cacheda. Reclassificar para **Alto**.
+
+32. **DOM-Based XSS e postMessage sem Validação de Origin:** *(Adicionado - automelhorar v2.2)*
+    - Completamente diferente do XSS clássico. O payload nunca vai ao servidor — flui do DOM diretamente para a execução no browser.
+    - **Sources DOM perigosos (onde o input entra):**
+      - `document.URL`, `location.hash`, `location.search`, `document.referrer`, `window.name`.
+    - **Sinks DOM perigosos (onde a execução ocorre):**
+      - `document.write(`, `innerHTML =`, `eval(`, `setTimeout(strVar`, `element.src =`, `.href = userInput`.
+    - **`grep_search`:** `location.hash`, `location.search`, `document.URL` sendo passados para `innerHTML`, `document.write`, `eval`, `setTimeout`.
+    - **postMessage sem validação de Origin:**
+      - `window.addEventListener('message', (e) => { eval(e.data) })` sem verificar `e.origin` = qualquer iframe em qualquer domínio pode enviar mensagens executadas como código.
+      - `grep_search` por: `addEventListener('message'`, `addEventListener("message"`. Verificar se `e.origin` é validado antes de processar `e.data`.
+      - **Impacto:** XSS persistente cross-origin, exfiltração de dados, bypass de CSP se o postMessage não for controlado por policy.
+
+33. **OAuth 2.0 e SAML — Ataques Específicos de Protocolo:** *(Adicionado - automelhorar v2.2)*
+    - Além de JWT, os próprios flows de OAuth e SAML têm falhas arquiteturais que exigem análise de protocolo.
+    - **OAuth 2.0:**
+      - **CSRF no OAuth (State Ausente):** se `state` não é gerado, validado e associado à sessão, um atacante pode forçar um usuário a vincular sua conta com a conta do atacante. `grep_search` por ausência de `state` em `oauth2`, `passport.js`, ao nível de `authorizationUrl`.
+      - **Authorization Code Leakage via Referer:** se o `redirect_uri` leva a uma página com recursos externos, o `code` vazou via header Referer.
+      - **PKCE Bypass:** se a app usa fluxo sem PKCE e o servidor aceitou, o código de autorização pode ser interceptado por um app malícioso no mesmo dispositivo.
+      - **Implicit Flow (legado):** access token retornado diretamente na URL = exposto em logs de servidor, history do browser, Referer.
+    - **SAML:**
+      - **XML Signature Wrapping (XSW):** o atacante duplica o elemento assinado, insere uma versão maliciosa fora do escopo de validação da assinatura. O servidor valida a assinatura mas consome o elemento não-assinado.
+      - **Comment Injection:** `user@evil.com<!---->@trusted.com` pode fazer o parser SAML interpretar o usuário de forma diferente da validação.
+    - **`grep_search`:** `passport.use(new OAuth`, `saml`, `xmldom`, `xml-crypto`, `SimpleSAMLphp`.
+
+34. **WebSocket Security — Cross-Site WebSocket Hijacking (CSWSH):** *(Adicionado - automelhorar v2.2)*
+    - Browsers enviam cookies de sessão automaticamente em conexões WebSocket, assim como em requisições HTTP. Se o servidor WebSocket não valida o header `Origin`, qualquer site pode abrir uma conexão autenticada em nome do usuário.
+    - **Diferença para CORS:** WebSocket não segue o modelo CORS. Não há preflight. A proteção única é a validação manual do header `Origin`.
+    - **Protocolo de detecção:**
+      1. `grep_search` por `new WebSocket(`, `io.on('connection'`, `WebSocketServer`, `ws.Server`.
+      2. No handler de conexão, verificar se `req.headers.origin` é validado contra uma whitelist antes de aceitar a conexão.
+      3. Ausência desta validação = qualquer site pode abrir WebSocket com os cookies da vítima e ler/escrever mensagens.
+    - **Chain Exploit:** CSWSH + WebSocket que executa comandos privilegiados (ex: chat de admin, painel de controle) = RCE ou Admin Takeover via conexão forjada.
+    - **Severidade:** Alto (acesso não-autorizado a dados em tempo real) → Crítico (se o WebSocket transmite comandos privilegiados).
+
 ## Protocolo de Investigação Exploratória (PEI)
 
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
 - **Se existirem arquivos IaC** (`.tf`, `docker-compose.yml`, `*.yaml` em `.github/workflows/`, `k8s/`): priorizar Pilares 25 e 26 imediatamente antes de qualquer código de aplicação.
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
-- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML → XXE. App usa GraphQL → introspection e batch aliases. App usa MongoDB/Firebase → operadores `$` não sanitizados. `unserialize/readObject/pickle.loads` → Pilares 27 imediato.
+- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML → XXE. App usa GraphQL → introspection e batch aliases. App usa MongoDB/Firebase → operadores `$` não sanitizados. `unserialize/readObject/pickle.loads` → Pilares 27 imediato. App usa LDAP/AD → Pilar 30 prioritário. App usa OAuth/SAML → Pilar 33 imediato. App tem WebSocket → verificar Origin no handler.
 
 ### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
 - Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
@@ -305,7 +358,7 @@
 - Mapear: pontos de entrada (forms, APIs, params GET/POST), camada de banco (queries, ORMs), autenticação/autorização, uploads, inclusões de arquivo.
 
 ### Fase 2 — Identificação de Critical Sinks e Source-to-Sink Tracing
-- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `md5(`, `sha1(`, `Math.random()`, `Set-Cookie`, `session_regenerate`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`.
+- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `md5(`, `sha1(`, `Math.random()`, `Set-Cookie`, `session_regenerate`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`, `ldap_search(`, `ldap_bind(`, `header(`, `location.hash`, `addEventListener('message'`, `ws.on('connection'`.
 - Para cada sink encontrado, rastrear até a origem do dado. Validar se há sanitização real (*whitelist*) ou apenas filtros ilusórios (*blacklist*).
 
 ### Fase 3 — Análise de Lógica de Negócio e Fronteiras de Confiança
@@ -434,4 +487,5 @@ compromisso total — do primeiro contato até RCE ou exfiltração completa.
 | v1.5 | 15/04/2026 | XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain |
 | v1.6 | 15/04/2026 | GraphQL Attack Surface completo, NoSQL Injection, SSRF protocolo com bypasses, Análise Criptográfica Sistemática, Protocolo de Autenticação e Sessão |
 | v2.0 | 15/04/2026 | UPGRADE TOTAL DE OUTPUT: Dual-Report (Executivo + Técnico), CVSS 3.1, Narrativa de Ataque, Patch Contextual, PoC Script, Matriz Risco×Esforço, Kill Chain Narrative |
-| v2.1 | 15/04/2026 | **IaC/Cloud Security (Dockerfile, Docker Compose, K8s, Terraform), CI/CD Pipeline Attack Surface (GitHub Actions script injection, dependency confusion), Deserialização por Linguagem (PHP/Java/Python/.NET com gadgets), HTTP Security Headers Matriz, ReDoS + Open Redirect com chain OAuth** |
+| v2.1 | 15/04/2026 | IaC/Cloud Security (Dockerfile, Docker Compose, K8s, Terraform), CI/CD Pipeline Attack Surface (GitHub Actions script injection, dependency confusion), Deserialização por Linguagem (PHP/Java/Python/.NET com gadgets), HTTP Security Headers Matriz, ReDoS + Open Redirect com chain OAuth |
+| v2.2 | 15/04/2026 | **LDAP Injection (Active Directory bypass, dump de diretório), CRLF Injection + Cache Poisoning chain, DOM-XSS + postMessage sem Origin validation, OAuth2/SAML ataques de protocolo (State CSRF, XSW, PKCE bypass), WebSocket CSWSH com protocolo de detecção completo** |
