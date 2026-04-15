@@ -137,6 +137,75 @@
     - **`grep_search` por:** `debug=True` (Django/Flask), `app.set('env', 'development')` (Express), `display_errors = On` (PHP), ausência de handlers de erro genéricos (`app.use((err, req, res, next)`), `e.printStackTrace()` sem captura.
     - **Regra de chain exploit:** Stack trace com query SQL + SQLi = atacante constrói payload preciso sem tentativa e erro. Reclassificar para **Alto**.
 
+20. **GraphQL — Superfície de Ataque Completa:** *(Adicionado - automelhorar v1.6)*
+    - GraphQL expõe uma API query-by-design que viola o modelo REST de endpoints fixos. A superfície de ataque é radicalmente diferente.
+    - **Introspection em produção:** `{__schema{types{name fields{name}}}}` devolve o schema completo — todos os tipos, campos e métodos. Auditores usam isso para mapear campos sensíveis ocultos que não aparecem na UI.
+      - `grep_search` por: `introspection: false`, `NoIntrospection`. A *ausência* indica introspection habilitado.
+    - **Batch Query / Alias Attack (Brute Force sem limite):** GraphQL permite múltiplas queries em uma única requisição via aliases. Atacante envia 1000 tentativas de login em um POST só, contornando rate limiting baseado em contagem de requisições.
+    - **Field-Level Authorization Bypass:** Verificar se a autorização é feita no resolver de cada campo ou apenas no endpoint raiz. Um campo `user { secretKey }` pode ser acessível mesmo sem permissão explícita.
+    - **Nested Query DoS (Query Depth):** Queries circularmente aninhadas sem limite de profundidade: `{ users { friends { users { friends ... } } } }` derruba o servidor.
+    - **`grep_search`:** `graphql`, `typeDefs`, `resolvers`, `@deprecated`, `Query {`, `Mutation {`.
+
+21. **NoSQL Injection:** *(Adicionado - automelhorar v1.6)*
+    - Diferente de SQLi clássico, NoSQL databases (MongoDB, CouchDB, Firebase) têm sua própria gramática de operações que pode ser injetada.
+    - **MongoDB Operator Injection:** Quando o servidor aceita JSON e passa diretamente para uma query Mongoose/MongoDB:
+      - `{"username": {"$gt": ""}, "password": {"$gt": ""}}` — `$gt` (maior que vazio) retorna o primeiro usuário, tipicamente admin.
+      - `{"username": "admin", "password": {"$regex": ".*"}}` — regex que casa tudo bypassa verificação de senha.
+      - `{"$where": "function() { return true; }"}` — execução de JavaScript no servidor (se `javascriptEnabled` não estiver desabilitado).
+    - **Detecção Estática:** `grep_search` por `find({`, `findOne({`, `req.body` ou `req.query` sendo passado diretamente para um método de query sem sanitização. Verificar ausência de `mongoose-express-sanitize` ou `mongo-sanitize`.
+    - **Firebase/Firestore:** Regras de segurança mal configuradas (`allow read, write: if true`) expõem todo o banco publicamente. `grep_search` por `firestore.rules`, `"rules":`.
+
+22. **SSRF — Protocolo Completo com Bypasses:** *(Adicionado - automelhorar v1.6)*
+    - Server-Side Request Forgery ocorre quando o servidor faz uma requisição para uma URL controlada pelo atacante. A validação de IP/domínio é frequentemente bypassada.
+    - **Alvos primários de pivô:**
+      - `http://169.254.169.254/` — AWS/GCP/Azure metadata (credenciais IAM)
+      - `http://localhost/`, `http://127.0.0.1/` — serviços internos
+      - `http://10.x.x.x/`, `http://192.168.x.x/` — rede interna
+    - **Técnicas de bypass de validação de IP:**
+      - Decimal: `http://2130706433/` = `127.0.0.1`
+      - Octal: `http://0177.0.0.1/`
+      - IPv6: `http://[::1]/`, `http://[::ffff:127.0.0.1]/`
+      - DNS Rebinding: domínio que resolve para IP externo e depois para interno
+      - Redirect: endpoint confiável que redireciona para destino proibido
+    - **Protocol Smuggling via SSRF:**
+      - `gopher://internal-redis:6379/_SET key value` — escrita em Redis
+      - `dict://internal-memcached:11211/set key 0 0 5\r\nvalue` — envenenamento de cache
+      - `file:///etc/passwd` — leitura de arquivo local via SSRF
+    - **`grep_search`:** `fetch(url`, `axios.get(url`, `curl_exec(`, `file_get_contents($url`, `HttpClient`, `WebClient`. Rastrear se a URL vem de parâmetro externo.
+
+23. **Análise Criptográfica Sistemática:** *(Adicionado - automelhorar v1.6)*
+    - Fraquezas criptográficas são silenciosas — o sistema funciona, mas a segurança é ilusória.
+    - **Hashing de Senhas Inseguro:**
+      - `grep_search` por `md5(`, `sha1(`, `sha256(` aplicados em senhas. Apenas `bcrypt`, `argon2`, `scrypt` ou `pbkdf2` são aceitáveis para armazenamento de senha.
+      - Ausência de salt único por usuário = rainbowtable attack imediato.
+    - **Segredos Hardcoded:**
+      - `grep_search` por `SECRET_KEY =`, `API_KEY =`, `password =`, `token =`, `PRIVATE_KEY`. Valores fixos no código invalidam toda a segurança baseada nesses segredos.
+    - **Aleatoriedade Insegura em Contexto Crítico:**
+      - `grep_search` por `Math.random()`, `random.random()`, `rand()`. Se usado para gerar tokens de sessão, reset de senha, CSRF tokens ou OTP — é predizível e quebrável.
+      - Correto: `secrets.token_hex()` (Python), `crypto.randomBytes()` (Node), `SecureRandom` (Java).
+    - **Modos de Cifra Fracos:**
+      - ECB mode não oculta padrões nos dados — `grep_search` por `AES/ECB`, `Cipher.getInstance("AES")`.
+      - IV fixo em CBC: reutilizar o mesmo IV torna a cifra determinística.
+    - **TLS/SSL Desabilitado:**
+      - `grep_search` por `verify=False` (Python requests), `rejectUnauthorized: false` (Node), `CURLOPT_SSL_VERIFYPEER, false`. Desabilitar verificação de certificado abre Man-in-the-Middle.
+
+24. **Protocolo Completo de Autenticação e Gestão de Sessão:** *(Adicionado - automelhorar v1.6)*
+    - Autenticação é a fronteira mais crítica de qualquer aplicação. Auditar sistematicamente:
+    - **Session Fixation:** O servidor reutiliza o Session ID pré-login após a autenticação.
+      - `grep_search` por `session_regenerate_id()` (PHP), `req.session.regenerate()` (Node). A *ausência* é a vulnerabilidade.
+    - **Logout sem Invalidação de Sessão:** Token ou cookie removido no cliente mas o servidor ainda o aceita.
+      - Verificar se há uma lista de revoção ou se o logout apenas deleta o cookie sem invalidação server-side.
+    - **Reset de Senha Explorávél:**
+      - Token de reset previsível (timestamp + user_id), sem expiração, reutilizável após uso, enviado via GET (exposto em logs de server).
+      - `grep_search` por funções de geração de token de reset. Verificar entropia (deve usar CSPRNG).
+    - **Enumeração de Usuários por Timing/Resposta:**
+      - Mensagens diferentes para usuário inexistente vs senha errada expõem validade de e-mails.
+      - Tempo de resposta diferente (bcrypt só computa se o usuário existe) também enumera.
+    - **Ausência de Rate Limiting em Endpoints Críticos:**
+      - `grep_search` por `rate-limit`, `throttle`, `ratelimit` nos arquivos de rota/middleware. Ausência em `/login`, `/reset-password`, `/api/auth` = brute force livre.
+    - **Cookies sem Flags de Segurança:**
+      - `grep_search` por `Set-Cookie`. Verificar ausência de `HttpOnly` (protege de XSS), `Secure` (força HTTPS), `SameSite=Strict` (protege de CSRF).
+
 ---
 
 ## Protocolo de Investigação Exploratória (PEI)
@@ -144,7 +213,7 @@
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
-- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal prioritário. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML em app REST → XXE.
+- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal prioritário. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML em app REST → XXE. App usa GraphQL → iniciar com introspection e batch aliases. App usa MongoDB/Firebase → verificar operadores `$` não sanitizados.
 
 ### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
 - Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
@@ -155,7 +224,7 @@
 - Mapear: pontos de entrada (forms, APIs, params GET/POST), camada de banco (queries, ORMs), autenticação/autorização, uploads, inclusões de arquivo.
 
 ### Fase 2 — Identificação de Critical Sinks e Source-to-Sink Tracing
-- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`.
+- `grep_search` focado nos sinks mais perigosos: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `md5(`, `sha1(`, `Math.random()`, `Set-Cookie`, `session_regenerate`.
 - Para cada sink encontrado, rastrear até a origem do dado. Validar se há sanitização real (*whitelist*) ou apenas filtros ilusórios (*blacklist*).
 
 ### Fase 3 — Análise de Lógica de Negócio e Fronteiras de Confiança
@@ -194,4 +263,5 @@
 | v1.2 | 15/04/2026 | Heurística Probabilística por Stack, Psicanálise do Código, Efeito Borboleta, Taint Analysis |
 | v1.3 | 15/04/2026 | Business Logic Flaws, Second-Order Injection, Trust Boundary Violations, Matriz de Severidade com Chain Exploit |
 | v1.4 | 15/04/2026 | Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE |
-| v1.5 | 15/04/2026 | **XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain** |
+| v1.5 | 15/04/2026 | XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain |
+| v1.6 | 15/04/2026 | **GraphQL Attack Surface completo (introspection, batch, field auth, DoS), NoSQL Injection (MongoDB operators, Firebase), SSRF protocolo com bypasses de IP e protocol smuggling, Análise Criptográfica Sistemática (hash, segredos, CSPRNG, TLS), Protocolo de Autenticação e Sessão (fixation, logout, reset, enumeração, rate limit, cookie flags)** |
