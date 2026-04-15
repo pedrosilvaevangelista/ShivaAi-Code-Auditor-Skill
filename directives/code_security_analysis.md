@@ -53,6 +53,45 @@
 
 9. **Taint Analysis Cognitivo Expresso:** Rastrear o dado do Source (input do usuário) ao Sink (execução/persistência) passando por todos os middlewares e transformações, identificando *onde* a cadeia de custódia do dado é rompida.
 
+10. **Mass Assignment (Parameter Pollution via ORM):** *(Adicionado - automelhorar v1.4)*
+    - Frameworks com ORM automático (Laravel `fill()`, Rails `update_attributes`, Spring `@ModelAttribute`) podem atribuir a campos protegidos se o desenvolvedor não usar `$fillable`/`$guarded` corretamente.
+    - Protocolo: ao encontrar endpoints POST/PUT que recebem JSON ou form-data, ler o Model/Entity correspondente e verificar quais campos são aceitos implicitamente. Testar envio de `role`, `is_admin`, `balance`, `verified` não esperados.
+    - `grep_search` por: `fill(`, `update(request`, `mass_assignment`, `@ModelAttribute`, `bind(req.body`.
+
+11. **Race Condition / TOCTOU (Time of Check Time of Use):** *(Adicionado - automelhorar v1.4)*
+    - O sistema verifica uma condição num momento e age com base nela num momento posterior. Entre os dois, um atacante paralelo viola a premissa. Ex: checar saldo R$100 → aprovar transferência → debitar. Se 50 requisições simultâneas chegam entre 'checar' e 'debitar', todas passam na checagem e debitam.
+    - Protocolo: identificar operações que seguem o padrão **verificar → agir** sem lock transacional (mutex, `SELECT FOR UPDATE`, transações atômicas). Especialmente crítico em: sistemas de cupom, saques, geração de tokens únicos.
+    - `grep_search` por: `beginTransaction`, `lock`, `mutex`, `SELECT FOR UPDATE`. A *ausência* desses termos em fluxos críticos é o sinal de alerta.
+
+12. **Server-Side Template Injection (SSTI) por Engine:** *(Adicionado - automelhorar v1.4)*
+    - O payload de detecção varia por engine. Ao identificar um motor de template, aplicar o probe correspondente:
+      - **Jinja2 (Python):** `{{7*7}}` → `49`. RCE: `{{config.__class__.__init__.__globals__['os'].popen('id').read()}}`
+      - **Twig (PHP):** `{{7*7}}` → `49`. RCE: `{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}`
+      - **Freemarker (Java):** `${7*7}` → `49`. RCE via `freemarker.template.utility.Execute`.
+      - **Smarty (PHP):** `{php}echo `id`;{/php}`
+      - **ERB (Ruby):** `<%= 7*7 %>` → `49`. RCE: `<%= `id` %>`
+    - `grep_search` por: `render_template_string`, `Twig\Loader`, `Template(`, `new Smarty`, `erb.new`.
+
+13. **JWT Algorithm Confusion Attack:** *(Adicionado - automelhorar v1.4)*
+    - Protocolo completo de análise de tokens JWT encontrados:
+      1. **Localizar** onde o token é gerado e validado (`grep_search` por `jwt.sign`, `jwt.verify`, `JWT.decode`, `JwtBuilder`).
+      2. **Verificar algoritmo:** se a validação aceita `alg` vindo do header do próprio token sem fixar o algoritmo aceito → `alg: none` bypass.
+      3. **Verificar RS256→HS256 downgrade:** se o servidor assina com RSA privada mas a verificação não força `algorithms=["RS256"]`, o atacante pega a chave pública (frequentemente disponível) e assina com HMAC usando ela como segredo.
+      4. **Inspecionar payload:** dados sensíveis em claims sem criptografia (`sub`, `role`, `email` visíveis em Base64).
+      5. **Verificar expiração:** ausência de `exp` ou janelas de validade excessivamente longas.
+
+14. **Análise de Dependências por CVE Conhecido:** *(Adicionado - automelhorar v1.4)*
+    - Sem scanner externo, o motor lê os manifestos de dependências e identifica versões com CVEs críticos conhecidos por raciocínio:
+    - **Arquivos a ler:** `package.json`, `composer.json`, `requirements.txt`, `pom.xml`, `Gemfile.lock`, `build.gradle`.
+    - **CVEs de alta prioridade para verificar mentalmente por versão:**
+      - `log4j < 2.15.0` → Log4Shell (RCE crítico, CVE-2021-44228)
+      - `spring-core < 5.3.18` → Spring4Shell (RCE, CVE-2022-22965)
+      - `struts2 < 2.5.33` → RCE histórico recorrente
+      - `lodash < 4.17.21` → Prototype Pollution
+      - `jackson-databind < 2.9.10` → Deserialization RCE
+      - `PyYAML < 6.0` → `yaml.load()` sem Loader = RCE
+    - Qualquer versão encontrada abaixo desses thresholds deve ser reportada como **Crítico** imediato.
+
 ---
 
 ## Protocolo de Investigação Exploratória (PEI)
@@ -60,6 +99,10 @@
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
+
+### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
+- Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
+- Executar antes de qualquer leitura de código de aplicação — uma dependência vulnerável já justifica um finding Crítico independente da qualidade do código da aplicação.
 
 ### Fase 1 — Infiltração Total e Mapeamento de Superfície
 - Explorar recursivamente *todos* os diretórios e arquivos, sem exceção.
@@ -103,4 +146,5 @@
 | v1.0 | 15/04/2026 | PEI Base, 3 Camadas, Doutrina Inicial |
 | v1.1 | 15/04/2026 | Paradigma Paranoico, Ceticismo Contínuo, Tinta-por-Tinta |
 | v1.2 | 15/04/2026 | Heurística Probabilística por Stack, Psicanálise do Código, Efeito Borboleta, Taint Analysis |
-| v1.3 | 15/04/2026 | **Business Logic Flaws, Second-Order Injection, Trust Boundary Violations, Matriz de Severidade com Chain Exploit** |
+| v1.3 | 15/04/2026 | Business Logic Flaws, Second-Order Injection, Trust Boundary Violations, Matriz de Severidade com Chain Exploit |
+| v1.4 | 15/04/2026 | **Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE** |
