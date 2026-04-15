@@ -234,9 +234,96 @@
 ### Fase 4 — Validação Ad-Hoc (Prova de Conceito)
 - Para vulnerabilidades que exigem confirmação contextual (formato de hash, estrutura de JWT, comportamento de regex), criar script Python efêmero em `.tmp/`, rodar, coletar evidência, descartar.
 
-### Fase 5 — Síntese do Dossiê (Relatório)
-- Escrever `/reports/codeanalisis_[project_name].md` do zero.
-- **Obrigatório em cada finding:** Localização exata (arquivo + linha), fluxo Source→Sink, Prova de Conceito realista, Remediação pela causa-raiz (nunca por filtro adicional).
+### Fase 5 — Síntese do Dossiê de Elite (Dois Entregáveis)
+
+O relatório único e plano foi aposentado. O motor agora produz **dois documentos distintos** em cada auditoria:
+
+---
+
+#### 5A. RELATÓRIO EXECUTIVO — `reports/executive_[project].md`
+*Audiência: CEO, CTO, Conselho, Equipe Jurídica. Zero código. Linguagem de risco de negócio.*
+
+Estrutura obrigatória:
+```
+# Relatório Executivo de Segurança — [Nome do Projeto]
+Data | Auditor | Classificação Geral de Risco
+
+## Resumo Executivo (máx. 150 palavras)
+O que foi encontrado, qual o risco real ao negócio, o que pode acontecer se não for corrigido.
+
+## Panorama de Risco
+Tabela com contagem de findings por severidade + score geral ponderado.
+
+## Os 3 Cenários de Ataque Mais Críticos
+Para cada um: O que pode acontecer, Quem seria afetado, Custo estimado de breach.
+## Impacto Financeiro Estimado
+Baseado em IBM Cost of a Data Breach Report 2024:
+- Custo médio global de breach: USD 4,88M
+- Multiplicar pelo nível de exposição encontrado.
+
+## Próximos Passos Recomendados (priorizados por risco)
+```
+
+---
+
+#### 5B. RELATÓRIO TÉCNICO — `reports/codeanalisis_[project].md`
+*Audiência: Desenvolvedores, DevSecOps, Pentesters. Formato de elite. Cada finding é um caso completo.*
+
+**Estrutura obrigatória de cada finding:**
+
+```markdown
+---
+## [ID] [SEVERIDADE] — [Nome do Vetor] | CVSS: [X.X]
+**Vector String:** CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H
+**OWASP:** A0X:2021 — [Nome]
+**Status:** Confirmado por Análise Estática | Requer Validação de Runtime
+
+### Evidência Ancorada
+**Arquivo:** `path/to/file.php` | **Linhas:** 42-47
+```[linguagem]
+[código vulnerável exato lido, com as linhas exatas]
+```
+
+### Narrativa de Ataque
+Um atacante não-autenticado ao acessar o endpoint `POST /api/users` com o 
+corpo `{"role": "admin"}` consegue elevar seus privilégios silenciosamente.
+O dado flui de `req.body` → `User.create(req.body)` sem filtro de campos 
+protegidos, pois o model não define `$fillable`. O atacante passa a ter 
+controle administrativo completo sobre a plataforma.
+
+### Prova de Conceito (Script Executável)
+```python
+# PoC gerado pelo motor — executável diretamente
+import requests
+# [script real baseado no código lido]
+```
+
+### Código Corrigido (Patch Contextual)
+```diff
+- User.create(req.body)  
++ User.create(req.body.pick(['name', 'email', 'password']))
+```
+*Justificativa da correção: [explicação da causa-raiz, não do sintoma]*
+
+### Impacto em Cadeia
+Se combinado com [outro finding ID]: escala de [Médio] para [Crítico].
+---
+```
+
+**Encerramento obrigatório do relatório técnico:**
+```markdown
+## Matriz de Priorização — Risco × Esforço de Correção
+
+| Finding | Severidade | Esforço de Fix | ROI de Segurança |
+|---|---|---|---|
+| [ID-01] | 🔴 Crítico | Baixo (30min) | ⭐⭐⭐⭐⭐ Corrija hoje |
+| [ID-02] | 🟠 Alto | Médio (2h) | ⭐⭐⭐⭐ Alta prioridade |
+| [ID-03] | 🟡 Médio | Alto (1 Sprint) | ⭐⭐⭐ Planeje |
+
+## Narrativa de Comprometimento Total (Kill Chain)
+História em prosa de como um atacante real encadearia os findings para 
+compromisso total — do primeiro contato até RCE ou exfiltração completa.
+```
 
 ---
 
@@ -264,4 +351,5 @@
 | v1.3 | 15/04/2026 | Business Logic Flaws, Second-Order Injection, Trust Boundary Violations, Matriz de Severidade com Chain Exploit |
 | v1.4 | 15/04/2026 | Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE |
 | v1.5 | 15/04/2026 | XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain |
-| v1.6 | 15/04/2026 | **GraphQL Attack Surface completo (introspection, batch, field auth, DoS), NoSQL Injection (MongoDB operators, Firebase), SSRF protocolo com bypasses de IP e protocol smuggling, Análise Criptográfica Sistemática (hash, segredos, CSPRNG, TLS), Protocolo de Autenticação e Sessão (fixation, logout, reset, enumeração, rate limit, cookie flags)** |
+| v1.6 | 15/04/2026 | GraphQL Attack Surface completo, NoSQL Injection, SSRF protocolo com bypasses, Análise Criptográfica Sistemática, Protocolo de Autenticação e Sessão |
+| v2.0 | 15/04/2026 | **UPGRADE TOTAL DE OUTPUT: Dual-Report (Executivo + Técnico), CVSS 3.1 por finding, Narrativa de Ataque Cinematográfica, Patch Contextual gerado no framework do alvo, PoC Script executável por finding, Matriz Risco×Esforço, Kill Chain Narrative de Comprometimento Total** |
