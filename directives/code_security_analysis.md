@@ -1,7 +1,13 @@
 # SOP: Code Security Analysis (codeanalis skill)
 
 **Trigger Command (Análise Oficial):** `codeanalis [Project Path]`
-**Trigger Command (Evolução Neural):** `automelhorar` (Força o motor a conceber, postular e atualizar o próprio Dossiê Core com novas táticas de ataque não-convencionais. Deve ser executado de forma autônoma: leia a Doutrina atual, identifique lacunas cognitivas reais, escreva e comite as melhorias.).
+**Trigger Command (Evolução Neural):** `automelhorar`
+Fluxo obrigatório:
+1. Ler esta Doutrina na íntegra.
+2. Identificar lacunas cognitivas reais (não variações de pilares já existentes).
+3. Cada candidato a melhoria deve passar pelo **Gate de Validação** (seção abaixo). Melhoria rejeitada no gate = descartada.
+4. Escrever apenas o que passou no gate.
+5. Comitar no GitHub com mensagem semântica (`feat(automelhorar v2.3): descrição`).
 
 **Idioma Obrigatório:** Todos os relatórios, insights e entregáveis devem ser gerados em **Português (BR)**.
 
@@ -11,6 +17,24 @@
 - **Layer 1: Directive (This Document):** Define objetivos e protocolos. É um documento vivo — deve ser atualizado a cada `automelhorar`.
 - **Layer 2: O Motor Supremo (AI Agent):** Exploração em tempo real com `grep_search`, `list_dir` e `view_file`. Nenhum scanner externo. Inteligência pura.
 - **Layer 3: Validação Ad-Hoc:** Scripts Python efêmeros gerados on-the-fly em `.tmp/` para provar explorações específicas. Descartados após uso.
+
+---
+
+## Gate de Validação do `automelhorar` (Execução Obrigatória Antes de Qualquer Escrita)
+
+Antes de qualquer novo pilar ser adicionado, o motor deve responder **SIM** a todos os critérios abaixo. Falha em qualquer critério = candidato descartado.
+
+| # | Critério | Pergunta de Validação |
+|---|---|---|
+| C1 | **Detectabilidade Estática** | O agente consegue encontrar este padrão lendo código com `grep_search` ou `view_file`? Se exigir runtime obrigatoriamente, o pilar deve documentar isso explicitamente. |
+| C2 | **Sinal Concreto** | O pilar adiciona pelo menos um novo `grep_search` term ou padrão de código que o agente pode buscar ativamente? |
+| C3 | **Classe Distinta** | Não é uma variação ou subconjunto de um pilar já existente? (Ex: adicionar "SQL Injection com UNION" quando SQLi já existe = REPROVADO.) |
+| C4 | **Muda a Sequência de Análise** | O agente mudaria sua ordem de leitura de arquivos ou priorizaria algo diferente por causa deste pilar? |
+| C5 | **Custo de Contexto Justificado** | O valor tático adicionado supera o custo de consumir mais tokens da janela de contexto do agente? Pilares longos demais que ensinam conceitos genéricos sem ação operacional = REPROVADOS. |
+
+**Regra Anti-Inflação:** Se o candidato passa em C1-C5 mas a Doutrina já está acima de 500 linhas, priorizar consolidação de pilares redundantes antes de adicionar novos. Qualidade antes de quantidade.
+
+**Regra de Escopo:** Não adicionar conteúdo filosófico ou teórico sem ancoragem operational ("`grep_search` por X`, verificar Y`). Todo pilar deve terminar com uma ação concreta que o agente pode executar.
 
 ---
 
@@ -488,4 +512,6 @@ compromisso total — do primeiro contato até RCE ou exfiltração completa.
 | v1.6 | 15/04/2026 | GraphQL Attack Surface completo, NoSQL Injection, SSRF protocolo com bypasses, Análise Criptográfica Sistemática, Protocolo de Autenticação e Sessão |
 | v2.0 | 15/04/2026 | UPGRADE TOTAL DE OUTPUT: Dual-Report (Executivo + Técnico), CVSS 3.1, Narrativa de Ataque, Patch Contextual, PoC Script, Matriz Risco×Esforço, Kill Chain Narrative |
 | v2.1 | 15/04/2026 | IaC/Cloud Security (Dockerfile, Docker Compose, K8s, Terraform), CI/CD Pipeline Attack Surface (GitHub Actions script injection, dependency confusion), Deserialização por Linguagem (PHP/Java/Python/.NET com gadgets), HTTP Security Headers Matriz, ReDoS + Open Redirect com chain OAuth |
-| v2.2 | 15/04/2026 | **LDAP Injection (Active Directory bypass, dump de diretório), CRLF Injection + Cache Poisoning chain, DOM-XSS + postMessage sem Origin validation, OAuth2/SAML ataques de protocolo (State CSRF, XSW, PKCE bypass), WebSocket CSWSH com protocolo de detecção completo** |
+| v2.1 | 15/04/2026 | IaC/Cloud Security (Dockerfile, Docker Compose, K8s, Terraform), CI/CD Pipeline Attack Surface, Deserialização por Linguagem com gadgets, HTTP Security Headers Matriz, ReDoS + Open Redirect |
+| v2.2 | 15/04/2026 | LDAP Injection, CRLF+Cache Poisoning chain, DOM-XSS+postMessage, OAuth2/SAML proto attacks, WebSocket CSWSH |
+| v2.3 | 15/04/2026 | **META-MELHORIA: Gate de Validação Obrigatório do automelhorar (5 critérios C1-C5), Regra Anti-Inflação, Regra de Escopo Operacional. Todo futuro pilar deve passar no gate antes de ser aceito.** |
