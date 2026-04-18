@@ -37,7 +37,7 @@ This is the most critical document of the system. Knowing and working *within* t
 
 **The operational solution:**
 - The **Doctrine** (`directives/code-security-analysis.md`) is the engine's persistent memory. Every new tactic, every discovered bypass, and every unconventional pattern identified in an audit **must be recorded there**.
-- The `upgrade` command is the consolidation mechanism of this memory. It must be executed with real autonomy: read the current Doctrine, identify what is missing, write it, and commit.
+- The `upgrade` command is the consolidation mechanism of this memory. It must be executed with real autonomy: read the current Doctrine and Vault, identify what is missing OR what needs refinement (refactoring, technical sharpening, modernizing bypasses), write the improvements, and commit.
 - The `agents.md` (this file) is the **initialization briefing** that loads the operational context for every new session. It must always be up-to-date.
 
 ### Limitation 5 — Sequential Reading and Cross-File Correlation

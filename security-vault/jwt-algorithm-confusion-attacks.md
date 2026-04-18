@@ -25,6 +25,12 @@ jsonwebtoken
 jjwt
 PyJWT
 jose
+jku
+x5u
+jwks_uri
+kid
+ES256
+ES512
 ```
 
 ---
@@ -86,7 +92,29 @@ print(r.status_code, r.text[:200])
 
 ---
 
-### 3. Missing `exp` or Excessive Expiration
+### 2.5. ECC (Elliptic Curve) Key Confusion
+
+**How it works:** Similar to RSA→HMAC confusion, but targeting Elliptic Curve algorithms (ES256, ES512). Some libraries confuse the ECC Public Key structure with an HMAC secret if the `alg` is switched.
+**Attack:** 
+1. Obtain the ECC Public Key (`x` and `y` coordinates).
+2. Attempt to sign the token with `HS256` using the raw public key bytes as the secret.
+3. Check if the server accepts the forged token.
+
+---
+
+### 2.6. JKU / X5U Header Injection
+
+**How it works:** `jku` (JWK Set URL) and `x5u` (X.509 URL) headers tell the server where to fetch the public key for verification.
+**Attack:** 
+1. Host your own malicious JWKS on a public server.
+2. Inject the `jku` header in the JWT pointing to your URL: `{"alg":"RS256","jku":"https://attacker.com/keys.json"}`.
+3. If the server fetches and trusts your key without a whitelist check, you can sign any token.
+
+**Static Detection:** Search for usage of `jku` or `x5u` in verification logic without explicit URL filtering.
+
+---
+
+### 4. Missing `exp` or Excessive Expiration
 
 ```python
 #  VULNERABLE — no expiration

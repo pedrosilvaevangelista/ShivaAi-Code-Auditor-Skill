@@ -26,6 +26,10 @@ introspection: false
 NoIntrospection
 depthLimit
 queryComplexity
+persisted-queries
+useQueryHash
+ApolloLink
+APQ (Automated Persisted Queries)
 ```
 
 ---
@@ -110,6 +114,16 @@ for key, value in data.get('data', {}).items():
 
 ---
 
+### 2.5. Persisted Queries Bypass (APQ)
+
+**How it works:** To save bandwidth and prevent arbitrary queries, APQ sends a SHA256 hash of the query instead of the query itself. If the server hasn't seen the hash, the client sends the query and the server caches it.
+**Attack:** 
+1. **Hash Discovery:** Find the query map in the application's JavaScript source.
+2. **Brute Force:** If you find a sensitive mutation's hash, you can execute it with your own variables even if the server blocks arbitrary new queries.
+3. **Poisoning:** In some misconfigured implementations, you can "persist" a malicious query under a known hash (Cache Poisoning).
+
+---
+
 ### 3. Field-Level Authorization Bypass
 
 **How it works:** authorization is only performed at the root resolver, but individual fields do not verify permissions.
@@ -154,7 +168,23 @@ for key, value in data.get('data', {}).items():
 }
 ```
 
-**Detection:** check whether `depthLimit` or `queryComplexity` middleware is present.
+**Recursion Bypass (Circular Fragments):**
+If the server has a simple depth limit based on query strings but does not analyze fragments properly:
+```graphql
+fragment UserFields on User {
+  friends {
+    ...UserFields
+  }
+}
+
+query {
+  users {
+    ...UserFields
+  }
+}
+```
+
+**Detection:** check whether `depthLimit` or `queryComplexity` middleware is present and if it handles fragments correctly.
 
 ```javascript
 //  CORRECT — limit depth
@@ -193,6 +223,31 @@ const server = new ApolloServer({
 # resetAllPasswords
 # → administrative mutations not available in the UI but present in the schema
 ```
+
+---
+
+### 6. Custom Directive Logic Bypass (@auth / @access)
+
+**How it works:** Many apps implement custom directives for field-level security. If the logic for these directives is flawed (e.g., it only checks the first layer of a nested query), an attacker can access protected data.
+
+```graphql
+type User {
+  id: ID!
+  email: String! @auth(role: "ADMIN")
+  billingInfo: Billing @auth(role: "ADMIN")
+}
+
+# Attack: Try to access nested fields that might not have the directive inherited properly
+query {
+  user(id: "123") {
+    billingInfo {
+      creditCardNumber # May bypass if @auth only checked billingInfo itself
+    }
+  }
+}
+```
+
+**Static Detection:** Trace the implementation of `SchemaDirectiveVisitor` or `mapSchema`. Check if the directive logic is applied recursively to all sub-fields of a protected type.
 
 ---
 

