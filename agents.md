@@ -76,10 +76,14 @@ This is the most critical document of the system. Knowing and working *within* t
 When `upgrade` is invoked, the flow is:
 1. **Read** `directives/code-security-analysis.md` in its entirety and all outers files in ShivaAi-Code-Auditor-Skill directory.
 2. **Read relevant files in** `security-vault/` to identify potential intelligence overlap or gaps.
-3. **Identify real gaps**: what would an elite auditor know that is not yet documented?
-4. **Postulate** the new tactics with explicit reasoning.
-5. **Write** the improvements to the Doctrine and/or create new tactical files in `security-vault/`.
-6. **Commit** to GitHub with a semantic message (`feat(upgrade vX.Y): description`).
+3. **Rule of Depth (MANDATORY):** Before postulating *new* tactical files or jumping to a new semantic version, ruthlessly analyze the *existing* files. Are they lacking modern bypass payloads? Are they missing architectural edge cases? **Do not add new things if you can improve what already exists.** Only when all current tactical files are validated to be at their absolute maximum elite potential are you allowed to increment the version and introduce new knowledge domains.
+4. **Versioning Protocol (STRICT):**
+   - **Minor Increments:** Each `upgrade` execution MUST advance the version by **+0.1** (e.g., v1.0 -> v1.1).
+   - **Major Jumps:** Jumps to a new major version (e.g., v1.x -> v2.0) are **STRICTLY FORBIDDEN** unless explicitly commanded by the USER.
+5. **Identify real gaps**: Based on the Rule of Depth, either identify existing files that need refactoring or (if they are perfect) identify new undocumented tactical domains.
+6. **Postulate** the improvements or new tactics with explicit reasoning.
+7. **Write** the improvements to the Doctrine and/or create/update tactical files in `security-vault/`.
+8. **Commit** to GitHub with a semantic message (`feat(upgrade vX.Y)` for version jumps, or `refactor(vault)` for depth improvements).
 
 ---
 
