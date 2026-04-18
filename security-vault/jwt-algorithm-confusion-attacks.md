@@ -114,6 +114,23 @@ print(r.status_code, r.text[:200])
 
 ---
 
+### 2.7. KID (Key ID) Path Traversal
+**How it works:** The `kid` header identifies which key to use. If the server uses the `kid` to fetch a file from the filesystem, an attacker can use path traversal to point to a known file.
+
+**Attack:**
+1. Set `kid` to `/dev/null`. If the server reads this as the secret, the secret becomes an empty string. Sign your token with an empty secret.
+2. Set `kid` to a known public file like `config.json`. If the server uses the file content as a secret, you can reproduce the signature.
+
+**Payload:** `{"alg":"HS256","kid":"../../../../dev/null"}`
+
+---
+
+### 2.8. JWT Header Parameter Pollution (HPP)
+**How it works:** Some libraries only check the first occurrence of a header, while others check the last. By providing duplicate keys, you can bypass specific security checks.
+
+**Payload:** `{"alg":"RS256", "alg":"HS256"}` -> If WAF sees RS256 and App sees HS256, confusion occurs.
+---
+
 ### 4. Missing `exp` or Excessive Expiration
 
 ```python
