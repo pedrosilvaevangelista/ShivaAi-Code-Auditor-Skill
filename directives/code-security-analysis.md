@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.4 - Neural Evolution
+# SOP: ShivaAi-Code-Auditor — v1.10 - Neural Evolution
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. Major version jumps are forbidden without explicit user command. v1.4 focuses on hardening Authentication, BOLA/IDOR, and Mass Assignment modules through the Rule of Depth.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. Major version jumps are forbidden without explicit user command. v1.10 completes the Batch Hardening phase (v1.5-v1.10), establishing elite depth across all tactical modules.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 

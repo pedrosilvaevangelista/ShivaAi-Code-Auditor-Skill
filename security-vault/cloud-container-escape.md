@@ -74,6 +74,15 @@ If the host's `/` or sensitive directories like `/etc/shadow` or `/root/.ssh` ar
 
 ---
 
+### [NEW] Kubernetes Service Account Token Abuse
+**How it works:** In K8s, a token is often mounted at `/var/run/secrets/kubernetes.io/serviceaccount/token`. If the Role/ClusterRole is over-privileged, the attacker can use this token to control the cluster.
+**Check:** `grep -r "rbac.authorization.k8s.io" .`
+
+### [NEW] Sidecar Injection Attacks
+**How it works:** If an application can modify K8s YAMLs or use a vulnerable Admission Controller, it can inject a malicious sidecar container into other pods to capture traffic or steal credentials.
+
+---
+
 ## 🧪 Validation Script (Post-RCE)
 
 ```python

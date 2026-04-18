@@ -79,7 +79,6 @@ const server = new ApolloServer({
 **How it works:** GraphQL allows multiple queries in a single request via aliases. An attacker can send 1000 login attempts in a single POST, bypassing rate limiting based on request count.
 
 ```graphql
-# A single HTTP request → 1000 password attempts
 mutation {
   a1: login(email: "admin@site.com", password: "password1") { token }
   a2: login(email: "admin@site.com", password: "password2") { token }
@@ -87,6 +86,10 @@ mutation {
   # ... up to a1000
 }
 ```
+
+### [NEW] Query Overloading (Denial of Service)
+**How it works:** Sending a massive number of aliases or large amounts of input data in a single request.
+**Detection:** Check for `validationRules: [queryComplexity(1000)]` or similar middleware.
 
 ```python
 # .tmp/graphql_batch_bruteforce.py

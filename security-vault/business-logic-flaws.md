@@ -40,6 +40,14 @@ Attack: go directly to /checkout/confirm without completing the steps
 → Order without payment? Empty shipping address?
 ```
 
+### [NEW] State Machine Bypasses
+**How it works:** The application logic assumes a specific order of states (e.g., `DRAFT` -> `SUBMITTED` -> `PAID` -> `SHIPPED`).
+**Attack:** Directly sending a state transition (e.g., `status=SHIPPED`) in a `PUT` request that should only be allowed by the internal system.
+
+### [NEW] Rounding / Precision Errors
+**How it works:** Vulnerabilities that occur during currency conversion or discount calculations (e.g., `0.005` being rounded down to `0` or up to `0.01`).
+**Attack:** Performing thousands of small transactions to "shave off" fractions of a cent (Salami slicing).
+
 **Protocol:** identify "confirmation" endpoints that do not verify the session/database state of previous steps.
 
 ---

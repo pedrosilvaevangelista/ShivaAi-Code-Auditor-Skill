@@ -214,6 +214,12 @@ Accepted null CORS + sandboxed iframe → Origin bypass without detection
 CORS + weak suffix validation → evil-trusted.com passes → exfiltration
 CORS misconfiguration + API with PII → LGPD/GDPR cross-origin violation
 Broad CORS + XSS → Exfiltrate CSRF tokens → Full CSRF bypass
+
+### [NEW] Chain: CORS Misconfiguration → XSS
+**How it works:** If an API endpoint reflects data from an authenticated cross-origin request (enabled by CORS) into a page that is vulnerable to XSS, the attacker can steal the entire session.
+
+### [NEW] The "Vary: Origin" Problem
+**How it works:** If a server reflects the `Origin` header but doesn't send `Vary: Origin`, a legitimate user's response (with their origin) might be cached by a CDN and served to everyone, leading to widespread data exposure.
 ```
 
 ---

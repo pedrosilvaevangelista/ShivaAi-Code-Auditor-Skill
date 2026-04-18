@@ -82,8 +82,13 @@ for i in {1..50}; do
          -H "Content-Type: application/json" \
          -d '{"amount": 100}' &
 done
+done
 wait
 ```
+
+### [NEW] Single-Packet Attack (HTTP/2)
+**How it works:** Instead of sending multiple requests (which have network jitter), an attacker uses HTTP/2 to send multiple streams in a single TCP packet. This ensures that the backend processes them almost simultaneously, drastically increasing the success rate.
+**Tool:** Burp Suite "Turbo Intruder" or custom H2 scripts.
 
 ---
 

@@ -73,13 +73,23 @@ SMUGGLED_PAYLOAD
 
 ---
 
-### TE.TE (Both process TE, but one can be obfuscated)
-
-```http
-POST / HTTP/1.1
-Transfer-Encoding: chunked
 Transfer-Encoding: identity     → duplicate header → one of the servers ignores the first
 ```
+
+### [NEW] CL.CL (Double Content-Length)
+**How it works:** Some servers accept multiple `Content-Length` headers. If the front-end and back-end pick different ones, smuggling occurs.
+**Payload:**
+```http
+POST / HTTP/1.1
+Content-Length: 10
+Content-Length: 15
+
+SMUGGLE_ME
+```
+
+### [NEW] H2C (HTTP/2 Cleartext) Smuggling
+**How it works:** When a proxy upgrades a connection from HTTP/1.1 to H2C but doesn't correctly handle the tunnel, an attacker can smuggle H2 frames.
+**Grepping for risk:** Look for `Upgrade: h2c` in proxy logs or configs.
 
 ```http
 # Transfer-Encoding header obfuscations

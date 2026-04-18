@@ -74,6 +74,14 @@ A malicious `.proto` message constructed to have recursive elements without dept
 
 ---
 
+### [NEW] Protobuf Type Confusion
+**How it works:** If a server uses a loose decoder or is vulnerable to type-confusion during deserialization, an attacker might send a message with a different type than expected to trigger unintended code paths.
+
+### [NEW] gRPC Smuggling (v2 over v1.1)
+**How it works:** Similar to HTTP Smuggling, but happens when a proxy decodes HTTP/2 (gRPC) and forwards it as HTTP/1.1 to a legacy back-end.
+
+---
+
 ## 🛡️ Fix
 
 1. **Disable Reflection:** Never use `reflection.Register(s)` in production code. Use environmental flags.

