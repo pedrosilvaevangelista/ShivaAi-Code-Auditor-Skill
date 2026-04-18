@@ -162,6 +162,11 @@ Flow: Registration  database with apparently safe input
 
 **Protocol:** always trace where a value saved in the database is reused in another query.
 
+### [NEW] Procedural Injection (PL/SQL, T-SQL, pgSQL)
+**How it works:** Injecting into stored procedures or administrative functions (e.g., `xp_cmdshell` in MSSQL).
+**Attack:** `' EXEC master..xp_cmdshell 'id'--`
+**Mitigation:** Disable high-risk stored procedures and use the principle of least privilege for the DB user.
+
 See: [[second-order-injection]]
 
 ---

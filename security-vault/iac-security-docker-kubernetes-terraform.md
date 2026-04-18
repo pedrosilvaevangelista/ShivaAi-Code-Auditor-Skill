@@ -253,6 +253,12 @@ output "db_password" {
 }
 ```
 
+### [NEW] Terraform State Leakage
+**How it works:** Even if variables are marked as `sensitive`, they are stored in **plain text** in the `terraform.tfstate` file. If the state file is stored in an insecure S3 bucket or local folder, the secrets are compromised.
+
+### [NEW] Improper K8s Admission Controllers
+**How it works:** Admission Controllers (like MutatingAdmissionWebhook) can be used to bypass security policies or inject malicious properties into pods before they are created.
+
 ---
 
 ## 🔗 Chain Exploits

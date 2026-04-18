@@ -38,6 +38,13 @@ Deep links allow apps to handle specific URLs. If an app uses a deep link to rec
 
 **Static Detection:** Search for custom URI schemes in the API configuration or documentation. Trace how the API handles "Callback URLs" for mobile clients.
 
+### [NEW] URL Scheme Collision
+**How it works:** Multiple apps can register for the same custom scheme (e.g., `myapp://`). The OS may prompt the user or pick one. An attacker app can intercept the callback.
+**Mitigation:** Use Android App Links or iOS Universal Links (verified via `.well-known/assetlinks.json`).
+
+### [NEW] In-App Browser (WebView) Token Theft
+**How it works:** If a mobile app opens an In-App Browser to a page with XSS, the attacker can use `window.JSInterface` (if improperly exposed) to steal tokens from the native app memory.
+
 ---
 
 ## 💣 Attack Category 2: Lack of Certificate Pinning

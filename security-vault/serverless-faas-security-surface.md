@@ -109,6 +109,12 @@ def lambda_handler(event, context):
 2. **Restrictive IAM Roles:** Define specific actions (`s3:GetObject`) and specific resources (`arn:aws:s3:::my-bucket/*`).
 3. **Stateless Execution:** Always clear local state (`global` vars) and delete ephemeral `.tmp` files before the execution ends. Do not rely on container teardowns.
 
+### [NEW] Function-to-Function Smuggling
+**How it works:** In complex FaaS meshes (Step Functions, Logic Apps), an attacker might smuggle parameters from a low-privilege function to a high-privilege one by injecting extra keys into the shared state.
+
+### [NEW] FaaS Metadata Service Attack
+**How it works:** Exploiting SSRF inside a function to access the cloud provider's internal metadata service (e.g., `169.254.169.254`) to steal temporary IAM credentials.
+
 ---
 
 ## 📌 References

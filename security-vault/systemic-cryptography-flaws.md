@@ -182,6 +182,19 @@ cipher = AES.new(key, AES.MODE_CBC, FIXED_IV)  # NEVER reuse IV
 iv = get_random_bytes(16)
 cipher = AES.new(key, AES.MODE_CBC, iv)
 # Send iv concatenated with ciphertext
+
+### [NEW] Padding Oracle Attack (CBC Mode)
+**How it works:** If the server reveals whether a decrypted message has valid padding (e.g., via different error messages or timing), an attacker can decrypt the ciphertext block-by-block without the key.
+**Detection:** Look for custom decryption logic and error handlers that distinguish between "invalid padding" and "MAC mismatch".
+
+### [NEW] Timing Attacks (String Comparison)
+**How it works:** Normal string comparison (`==`) returns as soon as it finds a mismatch. An attacker can measure the time taken to guess a secret (like an API key) character-by-character.
+**Fix:** Always use constant-time comparison libraries.
+```python
+#  CORRECT
+import hmac
+is_valid = hmac.compare_digest(provided_token, secret_token)
+```
 ```
 
 ---

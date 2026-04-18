@@ -132,6 +132,10 @@ db.users.findOne({ username: {$gt: ""}, password: {$gt: ""} })
 }
 ```
 
+### [NEW] NoSQL-to-SQL Bridge Injection
+**How it works:** In hybrid architectures where a NoSQL query result is used to build a SQL query (or vice-versa), an attacker can inject SQL syntax into the NoSQL database that will later fire in the SQL engine.
+**Protocol:** Audit data transition points between different database engines.
+
 ---
 
 ### [NEW] Blind NoSQLi Data Exfiltration

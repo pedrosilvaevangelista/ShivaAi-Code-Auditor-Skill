@@ -64,6 +64,12 @@ In a shared MQ cluster, if Service A can write to Service B's queue, Service A c
 
 **Detection:** Check MQ configuration files (e.g., `rabbitmq.conf`, `definitions.json`) or Terraform scripts for lack of `access_control: write` restrictions.
 
+### [NEW] Event-Bus Hijacking
+**How it works:** In event-driven architectures (Pub/Sub), if any service can publish to any topic, an attacker can trigger system-wide events (e.g., `ORDER_SHIPPED` or `USER_DELETED`) without authorization.
+
+### [NEW] Message Replay Attacks
+**How it works:** If messages do not contain a unique ID or timestamp validated on the consumer side, an attacker can capture a legitimate message (like a "Grant Premium" command) and re-send it multiple times.
+
 ---
 
 ## 🧪 Validation Script (RabbitMQ Deserialization)
