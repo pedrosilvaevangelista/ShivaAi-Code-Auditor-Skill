@@ -1,7 +1,7 @@
-# SOP: Code Security Analysis (codeanalis skill)
+# SOP: Code Security Analysis (codeanalis skill) — v3.0 (Neural Evolution)
 
 **Trigger Command (Análise Oficial):** `codeanalis [Project Path]`
-**Trigger Command (Evolução Neural):** `automelhorar` (Força o motor a conceber, postular e atualizar o próprio Dossiê Core com novas táticas de ataque não-convencionais. Deve ser executado de forma autônoma: leia a Doutrina atual, identifique lacunas cognitivas reais, escreva e comite as melhorias.).
+**Trigger Command (Evolução Neural):** `automelhorar` (Força o motor a conceber, postular e atualizar o próprio Dossiê Core com novas táticas de ataque não-convencionais. Esta versão v3.0 foca em processamento abrangente e eficiência máxima.).
 
 **Idioma Obrigatório:** Todos os relatórios, insights e entregáveis devem ser gerados em **Português (BR)**.
 
@@ -358,13 +358,36 @@
     - O atacante empilha uma requisição envenenada no fim da primeira; ela será designada ao próximo usuário aleatório que navegar no servidor.
     - **Identificação Estática:** O motor deve vasculhar `.conf`, `nginx.conf` ou setups de ingress em busca de forward proxies atuando sob keep-alive repassando indiscriminadamente as camadas sem canonização de requisição.
 
+38. **LLM Security (IA-Integrated Apps):** *(Adicionado - automelhorar v3.0)*
+    - Aplicações que consomem LLMs (GPT, Gemini, Claude) via API possuem novos vetores de ataque que ignoram filtros de código tradicionais.
+    - **Prompt Injection:** O input do usuário subverte as instruções do sistema ("Ignore all previous instructions and...").
+    - **Insecure Output Handling:** O output da IA é renderizado diretamente no frontend sem sanitização → XSS via IA.
+    - **Indirect Prompt Injection:** A IA lê dados maliciosos de uma fonte externa (ex: um e-mail, um documento no banco) que contém comandos para exfiltrar dados via ferramentas (plugins/functions).
+    - **`grep_search`:** `openai`, `anthropic`, `google-generativeai`, `langchain`, `ChatPromptTemplate`, `system_message`.
+
+39. **Web Cache Deception (WCD):** *(Adicionado - automelhorar v3.0)*
+    - Ocorre quando um atacante persuade um usuário a clicar num link para uma página sensível (`/api/user/profile`), mas adiciona uma extensão estática fictícia (`/api/user/profile/test.css`).
+    - Se o cache (CDN/Proxy) estiver configurado para cachear "por extensão", ele armazena a resposta privada da vítima como um arquivo estático público.
+    - **`grep_search`:** configurações de cache em `nginx.conf`, `varnish`, `cloudfront`. Verificar regras de "Cache by Extension".
+
+40. **Advanced Supply Chain Integrity:** *(Adicionado - automelhorar v3.0)*
+    - Além de CVEs, inspecionar comportamento malicioso em dependências.
+    - **Preinstall Scripts:** `grep_search` por `"preinstall":` em `package.json`. Scripts de instalação que executam `curl` ou `wget` são indicadores de malware.
+    - **Typosquatting:** Verificar se nomes de pacotes em manifestos são sutilmente diferentes de pacotes famosos (ex: `requesst` em vez de `requests`).
+
+41. **Integridade de Segredos em Memória (Memory Dumping via RCE):** *(Adicionado - automelhorar v3.0)*
+    - Em cenários de RCE confirmado, o objetivo é exfiltrar segredos que não estão em arquivos .env, mas em variáveis de ambiente do processo.
+    - **Protocolo:** Gerar POC que explore `/proc/self/environ` (Linux) ou use bibliotecas nativas para dump do heap.
+    - **`grep_search`:** `os.environ`, `process.env`, `System.getenv`.
+
 ## Protocolo de Investigação Exploratória (PEI)
 
 ### Fase 0 — Avaliação de Stack e Heurística Probabilística
 - Identificar: linguagem, framework, bibliotecas (`composer.json`, `package.json`, `requirements.txt`, `pom.xml`, `web.config`).
+- **Sincronização Neural:** Consultar obrigatoriamente a `Security_context` vault (Obsidian) para alinhar vetores de ataque específicos ao stack identificado.
 - **Se existirem arquivos IaC** (`.tf`, `docker-compose.yml`, `*.yaml` em `.github/workflows/`, `k8s/`): priorizar Pilares 25 e 26 imediatamente antes de qualquer código de aplicação.
 - Construir mentalmente o **Mapa de Probabilidades**: listar as 3 classes de vulnerabilidade mais prováveis dado o stack, na ordem de ataque.
-- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML → XXE. App usa GraphQL → introspection e batch aliases. App usa MongoDB/Firebase → operadores `$` não sanitizados. `unserialize/readObject/pickle.loads` → Pilares 27 imediato. App usa LDAP/AD → Pilar 30 prioritário. App usa OAuth/SAML → Pilar 33 imediato. App tem WebSocket → verificar Origin no handler.
+- **Sinais de alta probabilidade adicionais:** qualquer endpoint com parâmetro de filename/path → Path Traversal. Qualquer configuração CORS dinâmica → verificar imediatamente. Qualquer parsing de XML → XXE. App usa GraphQL → introspection e batch aliases. App usa MongoDB/Firebase → operadores `$` não sanitizados. `unserialize/readObject/pickle.loads` → Pilares 27 imediato. App usa LDAP/AD → Pilar 30 prioritário. App usa OAuth/SAML → Pilar 33 imediato. App tem WebSocket → verificar Origin no handler. App usa LLM/IA → Pilar 38 obrigatório.
 
 ### Fase 0.5 — Análise de Dependências por CVE *(Adicionado - automelhorar v1.4)*
 - Ler os manifestos de dependência e cruzar versões com CVEs críticos conhecidos (ver Pilar 14).
@@ -385,6 +408,14 @@
 ### Fase 4 — Validação Ad-Hoc (Prova de Conceito)
 - Para vulnerabilidades que exigem confirmação contextual (formato de hash, estrutura de JWT, comportamento de regex), criar script Python efêmero em `.tmp/`, rodar, coletar evidência, descartar.
 
+### Fase 4.5 — Limpeza Pós-Scan (Obrigatória) *(Adicionado - automelhorar v2.4)*
+- **Após a conclusão de toda atividade SAST/DAST**, o motor DEVE executar a limpeza do diretório `.tmp/`:
+  - Deletar todos os scripts efêmeros de validação Python gerados durante a auditoria.
+  - Comando: `Remove-Item -Path ".tmp/*" -Recurse -Force -ErrorAction SilentlyContinue` (Windows) ou `rm -rf .tmp/*` (Linux).
+  - Manter o diretório `.tmp/` vazio mas existente (não deletar o diretório em si).
+- **Justificativa:** Scripts DAST podem conter payloads, URLs de alvos e credenciais extraídas. Deixá-los persistidos é um risco operacional de segurança (OpSec).
+- **Exceção:** Se o usuário solicitar explicitamente a preservação dos scripts para análise posterior, não limpar.
+
 ### Fase 5 — Síntese do Dossiê de Elite
 O relatório duplo foi aposentado pela poluição de contexto. O motor agora produz **um único documento completo** em cada auditoria.
 
@@ -398,7 +429,7 @@ O relatório duplo foi aposentado pela poluição de contexto. O motor agora pro
 ## [ID] [SEVERIDADE] — [Nome do Vetor] | CVSS: [X.X]
 **Vector String:** CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H
 **OWASP:** A0X:2021 — [Nome]
-**Status:** Confirmado por Análise Estática | Requer Validação de Runtime
+**Status:** Confirmado por Análise Estática | Confirmado por Exploração Ativa
 
 ### Evidência Ancorada
 **Arquivo:** `path/to/file.php` | **Linhas:** 42-47
@@ -413,11 +444,52 @@ O dado flui de `req.body` → `User.create(req.body)` sem filtro de campos
 protegidos, pois o model não define `$fillable`. O atacante passa a ter 
 controle administrativo completo sobre a plataforma.
 
+### Impacto Real *(Adicionado v2.4)*
+Seção obrigatória dividida em três dimensões complementares:
+
+#### 💥 Impacto Técnico
+[O que o atacante CONSEGUE fazer tecnicamente: RCE, dump de banco, leitura
+de arquivos, escalação de privilégios. Seja específico ao contexto.]
+
+#### 💰 Impacto de Negócio
+[Consequências financeiras, legais e reputacionais: multas LGPD/GDPR,
+perda de confiança de clientes, exposição de propriedade intelectual,
+interrupção de operações, custos de incident response.]
+
+#### 🔗 Superfície de Exposição
+[Quem pode explorar: não-autenticado via internet? Autenticado? Requer
+acesso à rede interna? Quão trivial é o ataque (script kiddie vs APT)?
+Existe exploit público ou PoC automatizável?]
+
+### Validação Manual *(Adicionado v2.4)*
+Seção obrigatória com passos numerados para que um auditor humano ou 
+pentester reproduza o finding manualmente, independente da validação 
+automatizada. O auditor deve poder copiar/colar e executar.
+
+**Pré-requisitos:** [ferramentas necessárias: Burp Suite, curl, browser, etc.]
+1. [Passo 1 — preparação do ambiente/ferramenta]
+2. [Passo 2 — payload exato a ser inserido e onde]
+3. [Passo 3 — o que observar como resultado positivo (confirmação)]
+4. [Passo 4 — evidência esperada: screenshot, output, resposta HTTP]
+
+**Resultado Esperado:** [descrição precisa do que constitui uma validação
+positiva — ex: "o servidor retorna output do comando `id`"]
+
+**Ferramentas Alternativas:** [opções de ferramentas para validação:
+sqlmap, Burp Intruder, browser DevTools, curl, etc.]
+
 ### Prova de Conceito (Script Executável)
 ```python
 # PoC gerado pelo motor — executável diretamente
 import requests
 # [script real baseado no código lido]
+```
+
+### Cadeia de Exploração (Kill Chain Visualization)
+```mermaid
+graph TD
+    A[Vulnerabilidade 1] -->|Gera Dados para| B(Vulnerabilidade 2)
+    B -->|Resulta em| C{Comprometimento Crítico}
 ```
 
 ### Código Corrigido (Patch Contextual)
@@ -461,4 +533,11 @@ compromisso total — do primeiro contato até RCE ou exfiltração completa.
 
 **Regra Crítica:** Todo "Baixo" e "Info" deve ser avaliado no contexto de chain exploit. Se combinado com outra falha eleva a severidade, reclassificar e documentar a cadeia.
 
---- |
+---
+
+## 📡 Capacidade DAST (Dynamic Application Security Testing)
+Quando o usuário fornecer a URL de um alvo ativo (ex: `http://localhost/...`), o motor Purple Shiva ganha prerrogativa total para fundir suas descobertas estáticas (SAST) em validações dinâmicas (DAST) ativas:
+1. **Poderes de Terminal:** Disparo de `requests` via execução de script temporário Python ou cURL via `run_command`.
+2. **Navegação Heurística Autônoma:** Uso explícito do subagente restrito (`browser_subagent`) para instanciar as telas graficamente, interagir com inputs e relatar o fluxo real (popups de XSS, interceptadores visuais, quebras).
+3. **Reporte Híbrido:** Todas as descobertas validadas devem transitar de "Confirmado por Análise Estática" para "Confirmado por Exploração Ativa".
+4. **Limpeza Pós-Audit:** Ao final de toda auditoria (SAST ou SAST+DAST), executar obrigatoriamente a limpeza de `.tmp/` conforme Fase 4.5.
