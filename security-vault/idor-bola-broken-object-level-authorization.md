@@ -154,6 +154,19 @@ GET /api/documents/550e8400-e29b-41d4-a716-446655440000
 # If there is no ownership check, UUIDs provide no protection
 ```
 
+### [NEW] HPP (HTTP Parameter Pollution) for BOLA
+**How it works:** Some WAFs or app layers only validate the first occurrence of a parameter.
+**Attack:**
+`GET /api/user/details?id=MY_ID&id=VICTIM_ID`
+If the app uses the *last* parameter for the DB query but the WAF only checks the *first* one against a permissions list, the bypass is successful.
+
+### [NEW] Action-Based IDOR (Beyond Data Read)
+**How it works:** Identifying IDORs in endpoints that perform sensitive actions.
+**Examples:**
+- `POST /api/user/{id}/reset-mfa`
+- `POST /api/invite/accept/{inviteId}`
+- `PUT /api/subscription/{id}/cancel` (Cancel someone else's plan)
+
 ---
 
 ## 🧪 Test Script

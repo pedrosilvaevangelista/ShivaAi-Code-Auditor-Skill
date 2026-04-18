@@ -65,6 +65,20 @@ req.session.regenerate((err) => {
 });
 ```
 
+### 1.5. Session Donation
+**How it works:** Inverse of Fixation. The attacker creates a legitimate session and "donates" it to the victim (via XSS or link). If the victim performs actions (like adding a credit card) while using the attacker's session, the attacker can then use their own session to see the victim's data.
+
+---
+
+### Password Reset — Host Header Injection
+**How it works:** The app generates reset links using the `Host` header from the request.
+**Attack:**
+1. Attacker sends a reset request for victim's email.
+2. Attacker sets `Host: attacker.com` in the request header.
+3. The server sends the email to the victim with a link like `http://attacker.com/reset?token=...`.
+4. If victim clicks, the token is leaked to the attacker's logs.
+
+**Grepping for risk:** `request.get_host()`, `$_SERVER['HTTP_HOST']`.
 ---
 
 ### 2. Logout Without Server-Side Session Invalidation
