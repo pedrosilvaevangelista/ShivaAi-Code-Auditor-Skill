@@ -1,2 +1,9 @@
+# ShivaAi-Code-Auditor - Essentials Only
+
+# Temporary and local files
 .tmp/
 .obsidian/
+
+# Prevent accidental leak of local audit reports
+reports/*.md
+!reports/.gitkeep
