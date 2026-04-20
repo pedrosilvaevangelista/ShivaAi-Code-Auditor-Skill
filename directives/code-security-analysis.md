@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.70 - Neural Evolution Maturity Pillar 3
+# SOP: ShivaAi-Code-Auditor — v1.80 - Neural Evolution Maturity Pillar 4
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.70 focuses on Edge Logic, Cryptographic Side-Channels, and IoT/Web3 paradigms.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.80 applies the Rule of Depth — hardening thin vault files to elite level before expanding the Doctrine frontier.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -537,6 +537,19 @@
     - Exploiting the negotiation phase between client and server.
     - **Tactic:** Force the connection to fallback to TLS 1.0/SSLv3 to exploit legacy crypto flaws (POODLE), or exploit ALPN confusion to smuggle HTTP/1.1 requests through an HTTP/2 multiplexed tunnel where the ingress ignores header sizing.
     - **`grep_search`:** `minVersion: 'TLSv1'`, `allowHTTP1: true`.
+
+73. **Clickjacking & UI Redressing (Full Protocol):** *(Added - upgrade v1.80)*
+    - Target application renders inside a transparent `<iframe>` overlaid on a malicious page. User clicks on seemingly innocent UI but interacts with the framed target.
+    - **High-value targets:** One-click destructive actions — "Delete Account", "Transfer Funds", "Revoke OAuth App", "Make Admin".
+    - **`grep_search`:** Absence of `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`. Check `helmet.frameguard()` or `app.use(helmet())` in Express.
+    - **Advanced variant — Likejacking:** Overlapping a Facebook "Like" button atop a `<button>` to force CSRF-like action with no token required.
+    - **Drag-and-Drop Variant:** Tricking user into dragging content from a hidden iframe into a visible input, leaking cookies or CSRF tokens.
+
+74. **HTTP/2 Rapid Reset Attack (CVE-2023-44487):** *(Added - upgrade v1.80)*
+    - A catastrophic DoS vector discovered in 2023. Attacker exploits HTTP/2 stream multiplexing by rapidly sending RST_STREAM frames to cancel streams immediately after opening them, forcing the server to allocate and discard resources at extreme scale.
+    - **Impact:** Amplifies DoS attack efficiency by 2-3 orders of magnitude compared to HTTP/1.1 floods. A single machine can take down unpatched servers.
+    - **Static Identification:** Check if the stack uses an unpatched HTTP/2 server. `grep_search` for `http2` or `@nestjs/platform-fastify` and verify library versions against patched versions (Node.js v18.18.2+, v20.8.1+).
+    - **`grep_search`:** `http2.createServer(`, `fastify({ http2: true`, `listen.*https:`. Cross-reference with dependency manifests for unpatched versions.
 
 ## Exploratory Investigation Protocol (EIP)
 

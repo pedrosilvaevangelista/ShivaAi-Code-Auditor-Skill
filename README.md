@@ -33,7 +33,7 @@ To ensure maximum technical precision and depth of reasoning, use high-performan
 | :--- | :--- |
 | **Standard Audit** | `ShivaAuditor -d [Project Path]` |
 | **Audit + Web Validation** | `ShivaAuditor -d [Project Path] -ip [ip:port]` |
-| **Neural Evolution (v1.70)** | `upgrade` (Maturity Pillar 3 Hardened) |
+| **Neural Evolution (v1.80)** | `upgrade` (Maturity Pillar 4 — Vault Depth Hardening) |
 
 > [!TIP]
 > Detailed reports are automatically generated in `.md` format within the `reports/` folder.

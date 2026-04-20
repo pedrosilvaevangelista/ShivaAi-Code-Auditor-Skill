@@ -93,6 +93,7 @@
 | 2026-04-17 | Vault Created | Full initialization of the knowledge base. |
 | 2026-04-20 | Vault Hardening | Upgrade v1.60: Added AI Security, Supply Chain, and missing tactical pillars. |
 | 2026-04-20 | Pillar Evolution | Upgrade v1.70: Focus on Cryptographic Side-Channels, API Desync, and Deep Tech (IoT/Web3). |
+| 2026-04-20 | Depth Hardening | Upgrade v1.80: Rule of Depth applied — insecure-deserialization, pii-data-leakage, dom-clobbering, json-hijacking fully remastered to elite level. Pillars 73 (Clickjacking) and 74 (HTTP/2 Rapid Reset) added. |
 
 ---
 

