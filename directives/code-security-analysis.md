@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.80 - Neural Evolution Maturity Pillar 4
+# SOP: ShivaAi-Code-Auditor — v1.90 - Neural Evolution Maturity Pillar 5
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.80 applies the Rule of Depth — hardening thin vault files to elite level before expanding the Doctrine frontier.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.90 executes the Rule of Depth on the thinnest vault pillars and anchors DNS/UI attack surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -550,6 +550,18 @@
     - **Impact:** Amplifies DoS attack efficiency by 2-3 orders of magnitude compared to HTTP/1.1 floods. A single machine can take down unpatched servers.
     - **Static Identification:** Check if the stack uses an unpatched HTTP/2 server. `grep_search` for `http2` or `@nestjs/platform-fastify` and verify library versions against patched versions (Node.js v18.18.2+, v20.8.1+).
     - **`grep_search`:** `http2.createServer(`, `fastify({ http2: true`, `listen.*https:`. Cross-reference with dependency manifests for unpatched versions.
+
+75. **Subdomain Takeover:** *(Added - upgrade v1.90)*
+    - DNS CNAME/A records pointing to decommissioned cloud resources (GitHub Pages, Heroku, S3, Netlify, Azure App Service) remain live after the resource is deleted.
+    - **Tactic:** Check each subdomain DNS record; if the target provider returns a "resource not found" error (e.g., `NoSuchBucket`, `No such app`, `There isn't a GitHub Pages site here`), the subdomain is claimable.
+    - **Critical Amplification:** If the taken-over subdomain is in the application's CORS whitelist, CSP `script-src`, or cookie `Domain` scope → immediate session hijacking, XSS bypass, or CORS bypass.
+    - **`grep_search`:** `github.io`, `herokuapp.com`, `s3.amazonaws.com`, `netlify.app`, `azurewebsites.net` in CORS configs, CSP headers, and deploy scripts.
+
+76. **Clickjacking Full Protocol — Priority Action Targeting:** *(Refined - upgrade v1.90)*
+    - Beyond CSS opacity framing, active priority: OAuth authorization screens, financial transfer confirmations, admin privilege escalation actions, and SSH key addition flows.
+    - **Drag-and-Drop Exfiltration Variant:** Tricking victim into dragging content from a hidden iframe (CSRF token rendered in visible form) into an attacker-controlled text input — exfiltrating the token without any click.
+    - **Cursorjacking:** Using `cursor: none` + fake cursor CSS to displace the perceived click target from the real one.
+    - **`grep_search`:** Absence of `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`. Check `helmet.frameguard(` in Express. Prioritize audit on pages with destructive one-click actions.
 
 ## Exploratory Investigation Protocol (EIP)
 

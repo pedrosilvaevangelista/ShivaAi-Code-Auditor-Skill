@@ -37,6 +37,7 @@
 - [[csrf-websocket-hijacking-cswsh]]
 - [[open-redirect]]
 - [[prototype-pollution]]
+- [[clickjacking-ui-redressing]]
 
 ### Infrastructure & Pipeline
 - [[iac-security-docker-kubernetes-terraform]]
@@ -46,6 +47,7 @@
 - [[dependency-analysis-cve]]
 - [[supply-chain-security]]
 - [[log-injection-tampering]]
+- [[subdomain-takeover]]
 
 ### Cryptography
 - [[systemic-cryptography-flaws]]
@@ -94,6 +96,7 @@
 | 2026-04-20 | Vault Hardening | Upgrade v1.60: Added AI Security, Supply Chain, and missing tactical pillars. |
 | 2026-04-20 | Pillar Evolution | Upgrade v1.70: Focus on Cryptographic Side-Channels, API Desync, and Deep Tech (IoT/Web3). |
 | 2026-04-20 | Depth Hardening | Upgrade v1.80: Rule of Depth applied — insecure-deserialization, pii-data-leakage, dom-clobbering, json-hijacking fully remastered to elite level. Pillars 73 (Clickjacking) and 74 (HTTP/2 Rapid Reset) added. |
+| 2026-04-20 | Depth Hardening | Upgrade v1.90: side-channel-timing, second-order-injection, waf-evasion remastered to elite level. Pillars 75 (Subdomain Takeover) and 76 (Clickjacking Full Protocol) anchored. |
 
 ---
 
