@@ -238,6 +238,9 @@ else:
     print("[OK] Only 1 successful withdrawal  possible protection in place")
 ```
 
+### [NEW] Multi-Step Race Condition (State machine)
+**How it works:** Attacker fires multiple requests to step 1 (Check) while step 2 (Action) is still in progress for a previous request, forcing the state machine into an inconsistent state.
+
 ---
 
 ## 🔗 Chain Exploits

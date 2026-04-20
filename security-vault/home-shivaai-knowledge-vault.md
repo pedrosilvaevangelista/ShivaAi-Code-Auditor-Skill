@@ -21,7 +21,7 @@
 - [[jwt-algorithm-confusion-attacks]]
 - [[authentication-session-management]]
 - [[oauth-2.0-saml-protocol-attacks]]
-- [[insecure-deserialization]]
+- [[insecure-deserialization-protocol]]
 
 ### Access Control
 - [[idor-bola-broken-object-level-authorization]]
@@ -44,6 +44,7 @@
 - [[http-security-headers]]
 - [[http-request-smuggling]]
 - [[dependency-analysis-cve]]
+- [[supply-chain-security]]
 
 ### Cryptography
 - [[systemic-cryptography-flaws]]
@@ -54,6 +55,10 @@
 - [[race-condition-toctou]]
 - [[unrestricted-file-upload]]
 - [[redos-regex-denial-of-service]]
+- [[grpc-protobuf-attack-surface]]
+
+### AI & Emerging Tech
+- [[llm-ai-security]]
 
 ### Methodology & Templates
 - [[eip-exploratory-investigation-protocol]]
@@ -81,6 +86,7 @@
 | Date | Note Created/Updated | Reason |
 |---|---|---|
 | 2026-04-17 | Vault Created | Full initialization of the knowledge base. |
+| 2026-04-20 | Vault Hardening | Upgrade v1.60: Added AI Security, Supply Chain, and missing tactical pillars. |
 
 ---
 

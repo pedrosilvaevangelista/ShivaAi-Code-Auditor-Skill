@@ -113,6 +113,10 @@ app.get('/api/users/:id/documents', async (req, res) => {
 #  CORRECT — Django
 def get_document(request, doc_id):
     doc = get_object_or_404(Document, id=doc_id, owner=request.user)
+    # **Detection:** look for logic that uses the ID *without* verifying that the record's `user_id` belongs to the `req.user.id`.
+
+### [NEW] BOLA in Batch Processing
+**How it works:** API allows updating multiple records at once (e.g., `PUT /api/orders [1, 2, 3]`). If the server only validates the first ID's ownership but updates all three, the attacker can include other users' IDs in the array.
     # Django raises 404 if not found (without leaking that it exists but doesn't belong to the user)
     return JsonResponse(doc.to_dict())
 ```

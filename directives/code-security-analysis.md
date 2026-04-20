@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.20 - Neural Evolution Final Maturity
+# SOP: ShivaAi-Code-Auditor — v1.60 - Neural Evolution Maturity Pillar 2
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.20 marks the absolute maturity of the v1.x branch, establishing architectural intelligence across all tactical modules, including Crypto, SSO, Cache, and Supply Chain.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.60 continues the hardening of the v1.x branch toward v2.0.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -367,41 +367,6 @@
     - **Protocol:** Generate POC exploring `/proc/self/environ` (Linux) or use native libraries for heap dump.
     - **`grep_search`:** `os.environ`, `process.env`, `System.getenv`.
 
-## Exploratory Investigation Protocol (EIP)
-
-### Phase 0 — Stack Evaluation and Neural Synchronization
-- Identify: language, framework, libraries (`package.json`, `composer.json`, `requirements.txt`).
-- **Neural Synchronization (MANDATORY & CRITICAL):** Immediately perform `list_dir` on `security-vault/`. Based on the detected stack, read the corresponding tactical files **BEFORE** reading target application code. This aligns the "mental engine" with specific payloads, bypass constants, and hostile logic patterns.
-- Mentally build the **Probability Map**: list the 3 most likely vulnerability classes given the stack, in attack order.
-
-### Phase 0.5 — Dependency Analysis by CVE *(Added - upgrade v1.4)*
-- Read dependency manifests and cross versions with known critical CVEs (see Pillar 14).
-- Execute before any application code reading — a vulnerable dependency justifies a Critical finding independent of code quality.
-
-### Phase 1 — Total Infiltration and Surface Mapping
-- Recursively explore *all* directories and files.
-- Map: entry points (forms, APIs, params), database layer (queries, ORMs), auth/z, uploads, file inclusions.
-
-### Phase 2 — Critical Sinks Identification and Source-to-Sink Tracing
-- `grep_search` focused on most dangerous sinks: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `Set-Cookie`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`, `ldap_search(`, `ldap_bind(`, `header(`, `location.hash`.
-- For each sink found, trace to data origin. Validate if there is real sanitization (*whitelist*) or just illusory filters (*blacklist*).
-- **Lateral Movement Assessment (MANDATORY):** For confirmed Critical/High sinks, evaluate if exploitation allows pivoting to internal network, cloud metadata, or other microservices (Butterfly Effect).
-
-### Phase 3 — Business Logic and Trust Boundary Analysis
-- Map application's intentional flow and attempt logical subversion.
-- Identify all points where system implicitly trusts external data without signature or verification.
-
-### Phase 4 — Ad-Hoc Validation (Proof of Concept)
-- For vulnerabilities requiring contextual confirmation (hash format, JWT structure, regex behavior), create ephemeral Python script in `.tmp/`, run, collect evidence, discard.
-
-### Phase 4.5 — Post-Scan Cleanup (MANDATORY) *(Hardened v3.1)*
-- **After completing all SAST/DAST activity**, the engine MUST clean the `.tmp/` directory.
-- **Path Safety:** Always use absolute path based on project root to avoid accidental deletion in incorrect directories (`Confused Deputy`).
-- Secure Command:
-  - **PowerShell:** `Get-ChildItem -Path "$ProjectRoot\.tmp\*" -Recurse | Remove-Item -Force`
-  - **Bash:** `rm -rf "$(pwd)/.tmp/"*`
-- **Validation:** After command, run `list_dir` on `.tmp/` to confirm it is empty.
-
 42. **OpSec & Artifact Integrity:** *(Added - upgrade v3.1)*
     - Maintaining audit environment integrity is part of the role.
     - **Tool Log Reading:** Inspect `reports/` and tool logs for secrets captured "accidentally" during scan and sanitize them.
@@ -552,6 +517,51 @@
     - Bypassing edge protections using HTTP Parameter Pollution (HPP), Chunked Desync, and Charset Manipulation.
     - **Tactic:** Check how the backend framework handles duplicate query parameters vs the WAF logic. Inject Unicode variations of malicious keywords (`ﬁle` vs `file`).
     - `grep_search`: `req.query`, `$_SERVER['QUERY_STRING']`, `Transfer-Encoding`.
+
+69. **Side-Channel Timing Attacks (Systematic Detection):** *(Added - upgrade v1.60)*
+    - Detecting vulnerabilities where response time difference leaks information (secret length, valid user, valid password prefix).
+    - **Tactic:** Inspect string comparisons for sensitive data (API keys, hashes). Using non-constant-time comparison (`==`, `strcmp`) allows bit-by-bit brute force.
+    - **`grep_search`:** `secret == request.key`, `hmac.compare_digest` (Check for its absence). Use of `crypto.timingSafeEqual` is the correction.
+
+70. **Modern API Semantic Desync (JSON vs URL-Encoded):** *(Added - upgrade v1.60)*
+    - Occurs when the WAF/Proxy parses the request as one type (e.g., JSON) but the backend parses it as another (e.g., URL-encoded body) due to conflicting `Content-Type` or charset manipulation.
+    - **Tactic:** Pass `{"isAdmin": false}` in JSON but append `?isAdmin=true` in the URL or use duplicate headers. Identify logic where parameters from multiple sources are merged without hierarchy.
+    - **`grep_search`:** `Object.assign(req.query, req.body)`, `merged_params`.
+
+## Exploratory Investigation Protocol (EIP)
+
+### Phase 0 — Stack Evaluation and Neural Synchronization
+- Identify: language, framework, libraries (`package.json`, `composer.json`, `requirements.txt`).
+- **Neural Synchronization (MANDATORY & CRITICAL):** Immediately perform `list_dir` on `security-vault/`. Based on the detected stack, read the corresponding tactical files **BEFORE** reading target application code. This aligns the "mental engine" with specific payloads, bypass constants, and hostile logic patterns.
+- Mentally build the **Probability Map**: list the 3 most likely vulnerability classes given the stack, in attack order.
+
+### Phase 0.5 — Dependency Analysis by CVE *(Added - upgrade v1.4)*
+- Read dependency manifests and cross versions with known critical CVEs (see Pillar 14).
+- Execute before any application code reading — a vulnerable dependency justifies a Critical finding independent of code quality.
+
+### Phase 1 — Total Infiltration and Surface Mapping
+- Recursively explore *all* directories and files.
+- Map: entry points (forms, APIs, params), database layer (queries, ORMs), auth/z, uploads, file inclusions.
+
+### Phase 2 — Critical Sinks Identification and Source-to-Sink Tracing
+- `grep_search` focused on most dangerous sinks: `exec`, `eval`, `system`, `include`, `query`, `innerHTML`, `dangerouslySetInnerHTML`, `deserialize`, `pickle.loads`, `yaml.load`, `find({`, `$where`, `fetch(url`, `graphql`, `Set-Cookie`, `unserialize(`, `ObjectInputStream`, `BinaryFormatter`, `github.event.pull_request.title`, `privileged: true`, `redirect(req`, `ldap_search(`, `ldap_bind(`, `header(`, `location.hash`.
+- For each sink found, trace to data origin. Validate if there is real sanitization (*whitelist*) or just illusory filters (*blacklist*).
+- **Lateral Movement Assessment (MANDATORY):** For confirmed Critical/High sinks, evaluate if exploitation allows pivoting to internal network, cloud metadata, or other microservices (Butterfly Effect).
+
+### Phase 3 — Business Logic and Trust Boundary Analysis
+- Map application's intentional flow and attempt logical subversion.
+- Identify all points where system implicitly trusts external data without signature or verification.
+
+### Phase 4 — Ad-Hoc Validation (Proof of Concept)
+- For vulnerabilities requiring contextual confirmation (hash format, JWT structure, regex behavior), create ephemeral Python script in `.tmp/`, run, collect evidence, discard.
+
+### Phase 4.5 — Post-Scan Cleanup (MANDATORY) *(Hardened v3.1)*
+- **After completing all SAST/DAST activity**, the engine MUST clean the `.tmp/` directory.
+- **Path Safety:** Always use absolute path based on project root to avoid accidental deletion in incorrect directories (`Confused Deputy`).
+- Secure Command:
+  - **PowerShell:** `Get-ChildItem -Path "$ProjectRoot\.tmp\*" -Recurse | Remove-Item -Force`
+  - **Bash:** `rm -rf "$(pwd)/.tmp/"*`
+- **Validation:** After command, run `list_dir` on `.tmp/` to confirm it is empty.
 
 ### Phase 5 — Elite Dossier Synthesis
 The double report has been retired. The engine now produces **a single complete document** per audit.

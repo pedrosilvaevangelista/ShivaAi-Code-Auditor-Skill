@@ -250,8 +250,12 @@ Predictable reset token → account takeover without victim interaction
 Non-invalidated session + XSS → permanent session hijacking
 No rate limit on /login + common password list → successful brute force
 Cookie without SameSite + privileged POST action → CSRF attack
-Session Fixation + link sent by email → automatic session hijacking
+Session Fixation + link sent by email → automatic session hijacking via `req.session.id` manipulation.
 ```
+
+### [NEW] Shadow API Endpoints
+**How it works:** Undocumented routes (e.g., `/api/debug/v1`, `/internal/status`) that do not share the same authentication middleware as official routes.
+**Detection:** Run `grep -r "app.all" .` or search for routes lacking `@login_required` decorators.
 
 ---
 

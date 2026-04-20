@@ -94,6 +94,9 @@ permissions:
   pull-requests: write    # only to comment on PRs
 ```
 
+### [NEW] CI/CD Secret Scoping Bypass
+**How it works:** Organizations often use "Environment Secrets" (e.g., `PROD_KEY` only for the `production` environment). If the workflow allows any branch to trigger a deployment to an environment without manual approval, an attacker can exfiltrate the prod secrets by creating a branch named `release-*`.
+
 ---
 
 ### 4. Dependency Confusion Attack

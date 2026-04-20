@@ -58,7 +58,12 @@ EVIDENCE: routes/user.js:42 | controllers/auth.js:78 | models/User.js:23
 
 ## 🔍 Cross-File Correlation
 
-For large projects, use `grep_search` **by specific variable** to trace the taint cross-file:
+For large projects,- Use `grep_search` to trace a specific variable or function throughout the *entire repository* before concluding that it is not used in a dangerous context.
+- For large projects, map the flows in order: External Inputs → Controllers/Routers → Services/Logic → Database/OS/File. Follow this backbone.
+
+### [NEW] Multi-Service Taint Mapping
+**Goal:** Track data as it moves through Message Queues (v1.18) or Microservices (gRPC).
+**Rule:** Assume data is "washed" but still tainted if it crosses a trust boundary (e.g., from an internal Auth service to a Business logic service).
 
 ```powershell
 # Trace where 'username' is used after entry

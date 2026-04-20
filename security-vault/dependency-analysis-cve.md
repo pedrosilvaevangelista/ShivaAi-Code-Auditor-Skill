@@ -8,7 +8,11 @@
 
 ## 📖 What is it
 
-Third-party dependencies with critical CVEs are vulnerabilities independent of the application's code quality. They must be audited **before** any application code analysis.
+Third-party dependencies with critical CVEs are vulnerabilities independent of the application's code quality. They must be audited **before** any- Typosquatting of common libraries.
+
+### [NEW] Lockfile Poisoning (pnpm/yarn)
+**How it works:** Attacker modifies `pnpm-lock.yaml` or `yarn.lock` to point a trusted dependency to a malicious version or a different registry entirely, without changing `package.json`.
+**Audit:** Check for mismatching hashes in lockfiles.
 
 ---
 

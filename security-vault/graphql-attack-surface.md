@@ -72,6 +72,11 @@ const server = new ApolloServer({
 });
 ```
 
+### [NEW] Introspection Bypass: Field Suggestions
+**How it works:** Even if introspection is disabled, many GraphQL engines provide field suggestions in error messages (e.g., `Did you mean "adminUser"?`).
+**Tactic:** Automate this to rebuild the schema even with `introspection: false`.
+**Tool:** `clairvoyance`.
+
 ---
 
 ### 2. Batch Query / Alias Attack (Brute Force Without Rate Limiting)

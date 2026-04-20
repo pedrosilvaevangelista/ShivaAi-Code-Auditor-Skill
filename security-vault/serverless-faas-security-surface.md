@@ -101,6 +101,9 @@ def lambda_handler(event, context):
 
 **Why it's bad:** A subsequent execution triggered by an attacker on the *same warm container* can access `/tmp/debug.json` or dump `global_sessions` memory to hijack other users' data.
 
+### [NEW] Cold Start Persistence: Exploiting the Lifecycle
+**How it works:** Cloud providers eventually recycle containers. However, an attacker can keep a "malicious" container warm by sending frequent ping requests, ensuring their backdoor persists for hours.
+
 ---
 
 ## 🛡️ Fix

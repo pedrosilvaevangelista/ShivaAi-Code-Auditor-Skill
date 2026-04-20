@@ -17,8 +17,11 @@ Every finding in the `reports/` folder must follow this exact structure to ensur
 **Category:** [e.g., Injection, Broken Access Control, etc.]  
 **Anchors:** [file-basename.ext:LineNumber] — *Mandatory*  
 **Status:** [Confirmed by Static Analysis | Confirmed by Active Exploitation]
+**Files:** `file.ext:L123`
+**Chain Potential:** (Describe how this findings connects to others, e.g., SSRF ➔ IAM theft)
+**Business Impact:** (Describe the financial or operational impact beyond technical severity)
 
-#### 🔍 Description
+### 📖 Technical Description
 Clear and concise technical explanation of the vulnerability. How it works in the context of this specific code. Use code snippets if necessary.
 
 #### 🔗 Attack Chain (Butterfly Effect)

@@ -62,9 +62,9 @@ jwt.verify(token, secret, { algorithms: ['HS256'] });
 
 ---
 
-### 2. RS256 → HS256 Downgrade (Algorithm Confusion)
-
-**How it works:** if the server uses RS256 (asymmetric: signs with private key, validates with public key), an attacker takes the **public** key (often available) and signs a forged token using HMAC with it as the secret.
+### 2. Algorithm Confusion (RS256 to HS256)
+**How it works:** The attacker changes the algorithm in the header from RS256 (asymmetric) to HS256 (symmetric). If the server uses the same verification function for both and passes the PUBLIC key as the secret for HS256, the attacker can sign their own tokens using the public key (which is often public).
+**Tactic:** Try signing the token with the public key (extracted from `.well-known/jwks.json`) using HS256.
 
 ```
 Condition: server accepts HS256 even when configured for RS256

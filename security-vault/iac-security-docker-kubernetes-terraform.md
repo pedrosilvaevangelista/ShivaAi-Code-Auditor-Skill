@@ -92,6 +92,10 @@ ENV AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 #  CORRECT — use runtime secrets, never in the image
 ```
 
+### [NEW] Docker Image Build-Time Persistence
+**How it works:** Using `ARG` vs `ENV`. `ARG` is only available during build-time, but it can still leak into the final image if not handled carefully (persisted in history or used in a binary).
+**Audit:** Run `docker history` (PoC logic) to check for leaked ARGs.
+
 ### 4. Missing `.dockerignore` + `COPY . .`
 
 ```dockerfile
@@ -172,6 +176,14 @@ spec:
           drop: ["ALL"]
         readOnlyRootFilesystem: true
 ```
+
+### [NEW] Kubernetes Namespace Leakage
+**How it works:** Even if pods are in different namespaces, they may be able to communicate if the network policy is not restrictive, or if they share the same Host Network or Host PID (see above).
+**Tactic:** Search for `NetworkPolicy` objects that allow cross-namespace communication.
+
+### [NEW] Shadow Resources (Terraform Drift)
+**How it works:** Resources created manually or via "click-ops" that are not managed by Terraform but might expose the infrastructure (e.g., an unmanaged S3 bucket).
+**Detection:** This requires runtime validation (`terraform plan`), but static markers appear in "drift" alert configs.
 
 ### Secrets in Environment Variables
 
@@ -269,6 +281,13 @@ RCE in app + ENV with AWS keys → Cloud account compromise
 Public S3 + .env in bucket → Exposed credentials → Database access
 Compromised IAM wildcard → Exfiltration of entire infrastructure
 ```
+
+### [NEW] Policy as Code (OPA / Checkov)
+**How it works:** Automated tools that scan IaC for misconfigurations. 
+**Tactic:** Search for `pass_threshold` or `skip_check` markers in CI/CD that might allow critical risks to bypass the scanner.
+
+### [NEW] Service Mesh (Istio/mTLS) Bypasses
+**How it works:** Service meshes often assume "sidecar" security. If a pod can run with `hostNetwork: true` or bypass the sidecar proxy, it can communicate in cleartext or impersonate other services even if mTLS is globally required.
 
 ---
 

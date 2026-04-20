@@ -172,10 +172,13 @@ POST /api/login HTTP/1.1
     "username": "hacker",
     "password": "password",
     "session": {
-        "role": "admin" // Attempting to inject into the session state
+        "role": "admin" // Attempt- Login-state injection (adding `is_logged_in: true` to a registration request)
     }
 }
 ```
+
+### [NEW] Nested Object Clobbering (Mass Assignment)
+**How it works:** If the app uses a deep-assign function, an attacker can send `{"user": {"permissions": {"admin": true}}}` to overwrite deeply nested configuration structures if the base object is not sanitized.
 
 ---
 

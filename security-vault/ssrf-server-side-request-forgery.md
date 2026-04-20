@@ -95,12 +95,13 @@ http://127.0.0.1#@trusted.com
 http://127.0.0.1:80?@trusted.com
 ```
 
-### DNS Rebinding
-```
-1. Attacker-controlled domain resolves to external IP (passes validation)
+###7. **DNS Rebinding:** Fast-changing DNS records to point to an internal IP after initial validation.
+
+### [NEW] Open Redirect ➔ SSRF Bridge
+**How it works:** If the SSRF validator only checks the first URL but follows redirects, an attacker can use a legitimate open redirect on a trusted domain to "tunnel" to an internal IP.
+**Example:** `http://trusted.com/proxy?url=http://trusted.com/redirect?to=http://169.254.169.254`
 2. After validation, TTL expires and domain starts resolving to internal IP
 3. Second request goes to the blocked internal IP
-```
 
 ---
 

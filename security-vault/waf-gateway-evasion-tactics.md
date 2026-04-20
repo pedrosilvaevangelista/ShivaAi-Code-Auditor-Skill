@@ -76,6 +76,18 @@ Payload: `%00<script>alert(1)</script>`
 - WAF: Reads until the null byte, concludes it's safe.
 - Backend App: Ignores null byte, executes `<script>`.
 
+### [NEW] Rate Limit Bypass via Header Variance
+**How it works:** Many WAFs/Gateways track IP-based rate limits using `X-Forwarded-For`. Sending a unique IP in this header (or `X-Real-IP`, `X-Originating-IP`) for each request can bypass the limit.
+
+### [NEW] Unicode-to-ASCII Collisions
+**How it works:** Some systems normalize Unicode characters down to ASCII. 
+**Example:** `ⓈⒺⓁⒺⒸⓉ` (U+24CE etc.) might be normalized to `SELECT`.
+**Bypass:** WAF doesn't recognize the circled letters, but the DB engine normalizes them and executes the query.
+
+### [NEW] Path Fragmentation
+**Payload:** `/api/v1/user/..;/..;/admin`
+**Effect:** Confuses path-based WAF rules while reaching the administrative endpoint on specific Java/Spring backends.
+
 ---
 
 ## 🛡️ Fix
