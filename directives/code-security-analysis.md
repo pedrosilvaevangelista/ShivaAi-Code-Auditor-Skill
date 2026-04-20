@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.90 - Neural Evolution Maturity Pillar 5
+# SOP: ShivaAi-Code-Auditor — v2.0 - Milestone: Hostile Architecture Synthesis
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.90 executes the Rule of Depth on the thinnest vault pillars and anchors DNS/UI attack surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.0 is the first major milestone — Hostile Architecture Synthesis. Core Doctrine carries 78 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -562,6 +562,17 @@
     - **Drag-and-Drop Exfiltration Variant:** Tricking victim into dragging content from a hidden iframe (CSRF token rendered in visible form) into an attacker-controlled text input — exfiltrating the token without any click.
     - **Cursorjacking:** Using `cursor: none` + fake cursor CSS to displace the perceived click target from the real one.
     - **`grep_search`:** Absence of `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`. Check `helmet.frameguard(` in Express. Prioritize audit on pages with destructive one-click actions.
+
+77. **Account Pre-Takeover & Merge Vulnerabilities:** *(Added - upgrade v2.0)*
+    - Attacker registers with the victim's email *before* the victim registers, then waits. When the victim authenticates via OAuth/SSO, the application merges the sessions and hands control to the pre-seeded account.
+    - **Key variants:** Email pre-seeding + OAuth merge, password reset tokens persisting post-registration, IDOR in OAuth account linking endpoint.
+    - **`grep_search`:** `findByEmail(` in OAuth callback handlers, `firstOrCreate(`, `upsert(`. Verify email verification is required *before* any OAuth merge can occur.
+
+78. **Business Logic: Numeric Overflow & Negative Value Attacks:** *(Added - upgrade v2.0)*
+    - Financial and inventory systems perform arithmetic on user-supplied values. Negative quantities, discount stacking to zero, and TOCTOU on balance checks break the economic model.
+    - **Tactic:** Submit `quantity: -10` or apply 20 coupons to reach total of $0.00. Check for `if total == 0: skip_payment` patterns.
+    - **Integer overflow:** Financial values stored as `INT32` wrap around at 2,147,483,647 — verify `DECIMAL`/`NUMERIC` DB types.
+    - **`grep_search`:** `quantity`, `amount`, `discount` in routes without `> 0` validation. `FLOAT` column types for monetary values. `if total == 0` or `if amount <= 0` pre-payment checks.
 
 ## Exploratory Investigation Protocol (EIP)
 

@@ -22,11 +22,13 @@
 - [[authentication-session-management]]
 - [[oauth-2.0-saml-protocol-attacks]]
 - [[insecure-deserialization-protocol]]
+- [[account-pre-takeover]]
 
 ### Access Control
 - [[idor-bola-broken-object-level-authorization]]
 - [[mass-assignment]]
 - [[business-logic-flaws]]
+- [[business-logic-numeric-overflow]]
 - [[ssrf-server-side-request-forgery]]
 - [[path-traversal-lfi]]
 
@@ -97,6 +99,7 @@
 | 2026-04-20 | Pillar Evolution | Upgrade v1.70: Focus on Cryptographic Side-Channels, API Desync, and Deep Tech (IoT/Web3). |
 | 2026-04-20 | Depth Hardening | Upgrade v1.80: Rule of Depth applied — insecure-deserialization, pii-data-leakage, dom-clobbering, json-hijacking fully remastered to elite level. Pillars 73 (Clickjacking) and 74 (HTTP/2 Rapid Reset) added. |
 | 2026-04-20 | Depth Hardening | Upgrade v1.90: side-channel-timing, second-order-injection, waf-evasion remastered to elite level. Pillars 75 (Subdomain Takeover) and 76 (Clickjacking Full Protocol) anchored. |
+| 2026-04-20 | **MILESTONE v2.0** | Hostile Architecture Synthesis: path-traversal-lfi, unrestricted-file-upload, supply-chain-security, cognitive-taint-analysis remastered to elite level. Pillars 77 (Account Pre-Takeover) and 78 (Business Logic Numeric Overflow) added. Engine reaches 78-pillar doctrine with elite-depth vault. |
 
 ---
 
