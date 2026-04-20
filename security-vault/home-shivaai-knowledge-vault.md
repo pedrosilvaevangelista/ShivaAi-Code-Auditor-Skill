@@ -45,10 +45,12 @@
 - [[http-request-smuggling]]
 - [[dependency-analysis-cve]]
 - [[supply-chain-security]]
+- [[log-injection-tampering]]
 
 ### Cryptography
 - [[systemic-cryptography-flaws]]
 - [[insecure-password-hashing]]
+- [[side-channel-timing-attacks]]
 
 ### APIs & Modern Protocols
 - [[graphql-attack-surface]]
@@ -56,9 +58,12 @@
 - [[unrestricted-file-upload]]
 - [[redos-regex-denial-of-service]]
 - [[grpc-protobuf-attack-surface]]
+- [[api-semantic-desync]]
 
 ### AI & Emerging Tech
 - [[llm-ai-security]]
+- [[web3-dapp-security]]
+- [[iot-embedded-shadow-logic]]
 
 ### Methodology & Templates
 - [[eip-exploratory-investigation-protocol]]
@@ -87,6 +92,7 @@
 |---|---|---|
 | 2026-04-17 | Vault Created | Full initialization of the knowledge base. |
 | 2026-04-20 | Vault Hardening | Upgrade v1.60: Added AI Security, Supply Chain, and missing tactical pillars. |
+| 2026-04-20 | Pillar Evolution | Upgrade v1.70: Focus on Cryptographic Side-Channels, API Desync, and Deep Tech (IoT/Web3). |
 
 ---
 

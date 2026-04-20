@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v1.60 - Neural Evolution Maturity Pillar 2
+# SOP: ShivaAi-Code-Auditor — v1.70 - Neural Evolution Maturity Pillar 3
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.60 continues the hardening of the v1.x branch toward v2.0.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v1.70 focuses on Edge Logic, Cryptographic Side-Channels, and IoT/Web3 paradigms.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -527,6 +527,16 @@
     - Occurs when the WAF/Proxy parses the request as one type (e.g., JSON) but the backend parses it as another (e.g., URL-encoded body) due to conflicting `Content-Type` or charset manipulation.
     - **Tactic:** Pass `{"isAdmin": false}` in JSON but append `?isAdmin=true` in the URL or use duplicate headers. Identify logic where parameters from multiple sources are merged without hierarchy.
     - **`grep_search`:** `Object.assign(req.query, req.body)`, `merged_params`.
+
+71. **Memory Corruption in Native Addons:** *(Added - upgrade v1.70)*
+    - Apps built on Node.js/Python are generally memory safe, but they often use Native C/C++ Extensions (node-gyp, Cython) that are vulnerable to Buffer Overflows or Use-After-Free.
+    - **Tactic:** Exploit large payloads or unexpected typing in inputs passed to native libraries for image processing, crypto, or data parsing to crash the VM or achieve RCE.
+    - **`grep_search`:** `.node`, `ffi.Library`, `ctypes`, `binding.gyp`.
+
+72. **Protocol Downgrade & ALPN Confusion (TLS/HTTP2):** *(Added - upgrade v1.70)*
+    - Exploiting the negotiation phase between client and server.
+    - **Tactic:** Force the connection to fallback to TLS 1.0/SSLv3 to exploit legacy crypto flaws (POODLE), or exploit ALPN confusion to smuggle HTTP/1.1 requests through an HTTP/2 multiplexed tunnel where the ingress ignores header sizing.
+    - **`grep_search`:** `minVersion: 'TLSv1'`, `allowHTTP1: true`.
 
 ## Exploratory Investigation Protocol (EIP)
 
