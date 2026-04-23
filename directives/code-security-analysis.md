@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v2.5 - Milestone: Deep Cybernetics & AI Orchestration
+# SOP: ShivaAi-Code-Auditor — v2.6 - Milestone: Deep Cybernetics & AI Orchestration
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.5 is a Mega Upgrade introducing AI Agent Hijacking, Advanced IoT OTA, and HTTP/2 Desync. Core Doctrine carries 82 pillars. Vault is elite-depth hardened across all surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.6 hardens Cache Poisoning and IaC/Statefile leakage. Core Doctrine carries 83 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -593,6 +593,11 @@
     - Gateways translating HTTP/2 to HTTP/1.1 can be exploited to smuggle requests via pseudo-headers. Weakly typed backends fail to distinguish Arrays from Strings.
     - **Tactic:** Inject CRLF into HTTP/2 `:path` headers. Pass arrays `?id[]=1` to endpoints expecting strings to bypass regex or authentication checks.
     - **`grep_search`:** `http2`, `allowHTTP1: true`, `strcmp(`, `typeof`.
+
+83. **Shadow APIs & Zombie Endpoints (API Sprawl):** *(Added - upgrade v2.6)*
+    - Deprecated versions (e.g., `/api/v1/`) often remain active, lacking modern auth/WAF protections applied to `/api/v2/`.
+    - **Tactic:** Discover and test legacy endpoints for BOLA or mass assignment. Often hidden in old router files or unlinked controllers.
+    - **`grep_search`:** `v1`, `deprecated`, `legacy`, `old_api`.
 
 ## Exploratory Investigation Protocol (EIP)
 

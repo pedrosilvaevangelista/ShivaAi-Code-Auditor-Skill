@@ -1,6 +1,6 @@
-# Web Cache Poisoning & CPDoS
+# Web Cache Poisoning & CPDoS — Tactical Pillar
 
-**Tags:** #high #critical #cache-poisoning #cpdos #http-headers
+**Tags:** #high #critical #cache-poisoning #cpdos #http-headers #wcd #wce
 **OWASP:** A05:2021 Security Misconfiguration
 **CVSS Base:** 7.2 (High) — 9.3 (Critical if leading to XSS for all users)
 
@@ -8,8 +8,9 @@
 
 ## 📖 What it is
 
-**Web Cache Poisoning:** An attacker sends a request that causes the web cache (CDN, Varnish, Nginx) to store a malicious response and serve it to other users.
-**CPDoS (Cache-rePlying Denial of Service):** A variant where the attacker poisons the cache with an error page (e.g., 400 Bad Request), effectively taking the site down for all users served by that cache.
+**Web Cache Poisoning (WCP):** An attacker sends a request that causes the web cache (CDN, Varnish, Nginx) to store a malicious response (e.g., with XSS) and serve it to other users.
+**Web Cache Deception (WCD):** An attacker tricks a victim into requesting a sensitive page with a static extension (`/profile/me.css`). The cache stores the victim's private JSON/HTML, making it public.
+**CPDoS (Cache-rePlying Denial of Service):** An attacker poisons the cache with an error page (e.g., 400 Bad Request), effectively taking the site down for all users.
 
 ---
 
@@ -25,14 +26,13 @@ Cache-Control:
 max-age=
 s-maxage=
 proxy_cache
+stale-while-revalidate
 ```
 
 ---
 
 ## 💣 Attack Category 1: Unkeyed Header Injection
-
-**How it works:** The cache uses certain parts of the request (the "cache key", usually Host + URL) to decide if it has a stored response. Many headers are "unkeyed" (ignored by the cache key) but used by the application to generate the response.
-
+**How it works:** The cache uses the "cache key" (usually Host + URL) to identify resources. Many headers are "unkeyed" (ignored by the cache key) but used by the backend to generate the response.
 **Attack:**
 ```http
 GET /page HTTP/1.1
@@ -41,71 +41,38 @@ X-Forwarded-Host: attacker.com
 
 --- Response (Cached) ---
 HTTP/1.1 200 OK
-...
 <script src="https://attacker.com/evil.js"></script>
 ```
+**Impact:** All users visiting `target.com/page` receive the malicious script.
 
-**Impact:** All users visiting `target.com/page` now receive the script from `attacker.com`.
+## 💣 Attack Category 2: CPDoS (Header Size Limit & Method Override)
+**How it works:** Intermediate caches and origin servers often have different tolerances for header sizes or unsupported methods.
+**Attack 1 (Oversized Header):** Send `X-Oversized: AAAAA...` (8KB). CDN accepts it, Origin returns `400 Bad Request`. CDN caches the 400 error.
+**Attack 2 (Method Override):** Send `X-HTTP-Method-Override: POST` on a GET request. Origin rejects it (405 Method Not Allowed). CDN caches the 405 error for the GET endpoint.
 
----
+## 💣 Attack Category 3: Unkeyed Query Parameters (Fat GET)
+**How it works:** Caches often ignore tracking parameters (e.g., `?utm_source=`).
+**Attack:** If the application reflects the `utm_source` in the DOM without sanitization, an attacker can poison the cache for the main URL (`/page?utm_source=<script>...`) and the cache serves it to users visiting `/page`.
+**Fat GET:** Sending a GET request with a JSON body. If the cache ignores the body but the origin uses it, you can poison the response.
 
-## 💣 Attack Category 2: CPDoS (Header Size Limit)
-
-**How it works:** Some intermediate caches allow larger headers than the origin server.
-**Attack:**
-1. Send a request with a massive header (e.g., `X-Oversized: AAAAA...` 8KB).
-2. The CDN passes it to the Origin.
-3. Origin returns `400 Bad Request` because the header is too large.
-4. CDN caches the `400 Bad Request` response.
-5. **Result:** The page is now a 400 error for everyone.
-
----
-
-## 💣 Attack Category 3: Cache-Key Normalization Errors
-
-**How it works:** The cache and the origin normalize URLs differently (e.g., handling of `//` or `%2f`).
-**Attack:** Poison `/index.php` by sending a request to `/index.php//` if the cache treats them as the same but the origin doesn't.
+## 💣 Attack Category 4: Web Cache Entrapment (Hostile Cache Poisoning)
+**How it works:** The backend ignores unknown extensions, but the CDN caches based on them.
+**Attack:** Attacker requests `/api/user/profile;test.css`. The backend routes it to `/api/user/profile` (returning private JSON). The CDN sees `.css` and caches it publicly.
 
 ---
 
-## 🧪 Detection Script
-
-```python
-# .tmp/test_cache_poisoning.py
-import requests
-
-TARGET = "https://target.com/"
-CROP_HEADER = {"X-Forwarded-Host": "shiva-audit-test.com"}
-
-# 1. Send request with potential poisoning header
-r1 = requests.get(TARGET, headers=CROP_HEADER)
-
-# 2. Wait a second
-import time
-time.sleep(1)
-
-# 3. Send clean request to see if it's poisoned
-r2 = requests.get(TARGET)
-
-if "shiva-audit-test.com" in r2.text:
-    print("[CRITICAL] Web Cache Poisoning confirmed!")
-```
-
----
-
-## 🛡️ Fix
-
+## 🛡️ Fix & Hardening
 1. **Avoid Unkeyed Headers:** Do not use `X-Forwarded-*` headers to generate dynamic content in cached responses.
-2. **Key Everything:** If you must use a header for logic, ensure it is part of the CDN's cache key.
+2. **Key Everything:** If you must use a header for logic, ensure it is part of the `Vary` header.
 3. **Disable Cache for Errors:** Configure the CDN to never cache 4xx or 5xx responses.
-4. **Vary Header:** Use `Vary: User-Agent, X-Forwarded-Host` to separate cache entries.
+4. **Strict Routing:** Backend APIs must reject (404) requests with appended static extensions (e.g., `.css` on a JSON endpoint).
 
 ---
 
 ## 🔗 Chain Exploits
-
 ```
 Cache Poisoning + Reflected XSS ➔ Stored XSS for all users
 Cache Poisoning + Open Redirect ➔ Massive phishing/redirect campaign
 CPDoS ➔ Full site outage via a single request
+WCD ➔ Massive PII Leakage
 ```
