@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v2.1 - Milestone: Hostile Architecture Synthesis
+# SOP: ShivaAi-Code-Auditor — v2.5 - Milestone: Deep Cybernetics & AI Orchestration
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.1 introduces Web3 deepening and Log Tampering depth. Core Doctrine carries 79 pillars. Vault is elite-depth hardened across all surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.5 is a Mega Upgrade introducing AI Agent Hijacking, Advanced IoT OTA, and HTTP/2 Desync. Core Doctrine carries 82 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -578,6 +578,21 @@
     - DApps heavily rely on off-chain signatures (EIP-712). Applications often fail to validate the `nonce` or `chainID`, allowing signature replay across chains or multiple times on the same chain.
     - **Tactic:** Inspect signature verification logic in the DApp backend or the smart contract interface. Check if frontend logic correctly handles Slippage Tolerances — hardcoded slippage can be exploited via sandwich attacks. Check IPFS rendering for XSS.
     - **`grep_search`:** `signTypedData`, `ecrecover`, `slipage`, `chainID`, `ipfs://`.
+
+80. **AI Agent Tool Hijacking & RAG Poisoning:** *(Added - upgrade v2.5)*
+    - Autonomous agents reading untrusted data can be manipulated via Indirect Prompt Injection to execute internal tools (Confused Deputy).
+    - **Tactic:** Audit `tools` or `functions` bound to LLMs. Check if the agent reads user-generated content before executing actions. RAG databases must separate trusted vs untrusted vector spaces.
+    - **`grep_search`:** `tools:`, `LangChain`, `vectorStore.add(`, `agent.execute(`.
+
+81. **Advanced IoT/OTA Lifecycle Hijacking:** *(Added - upgrade v2.5)*
+    - Hardware updates and telemetry often lack cryptographic rigor.
+    - **Tactic:** Identify Over-The-Air (OTA) update functions. Verify if updates are verified via ECDSA/RSA signatures, not just MD5/SHA hashes. Check MQTT brokers for Wildcard (`#`) abuse.
+    - **`grep_search`:** `ota_update`, `verifySignature(`, `mqtt.subscribe`, `+`, `#`.
+
+82. **GraphQL & HTTP/2 Semantic Desync:** *(Added - upgrade v2.5)*
+    - Gateways translating HTTP/2 to HTTP/1.1 can be exploited to smuggle requests via pseudo-headers. Weakly typed backends fail to distinguish Arrays from Strings.
+    - **Tactic:** Inject CRLF into HTTP/2 `:path` headers. Pass arrays `?id[]=1` to endpoints expecting strings to bypass regex or authentication checks.
+    - **`grep_search`:** `http2`, `allowHTTP1: true`, `strcmp(`, `typeof`.
 
 ## Exploratory Investigation Protocol (EIP)
 
