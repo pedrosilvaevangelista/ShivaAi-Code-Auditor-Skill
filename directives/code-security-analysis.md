@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v2.6 - Milestone: Deep Cybernetics & AI Orchestration
+# SOP: ShivaAi-Code-Auditor — v2.7 - Milestone: Deep Cybernetics & AI Orchestration
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.6 hardens Cache Poisoning and IaC/Statefile leakage. Core Doctrine carries 83 pillars. Vault is elite-depth hardened across all surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.7 introduces Webhook Security and deepens gRPC/Protobuf protocols. Core Doctrine carries 84 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -598,6 +598,11 @@
     - Deprecated versions (e.g., `/api/v1/`) often remain active, lacking modern auth/WAF protections applied to `/api/v2/`.
     - **Tactic:** Discover and test legacy endpoints for BOLA or mass assignment. Often hidden in old router files or unlinked controllers.
     - **`grep_search`:** `v1`, `deprecated`, `legacy`, `old_api`.
+
+84. **Webhook & Asynchronous Callback Security:** *(Added - upgrade v2.7)*
+    - Third-party webhooks (Stripe, Twilio) can be spoofed or delayed to cause Race Conditions.
+    - **Tactic:** Validate HMAC signatures on all webhooks. Verify idempotency checks to prevent replay attacks (crediting an account 50 times with one valid payload).
+    - **`grep_search`:** `webhook`, `stripe-signature`, `crypto.createHmac`.
 
 ## Exploratory Investigation Protocol (EIP)
 

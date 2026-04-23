@@ -24,6 +24,7 @@ WithInsecure
 WithTransportCredentials(insecure.NewCredentials())
 channelz
 .proto
+MessageFactory
 ```
 
 ---
@@ -74,14 +75,24 @@ A malicious `.proto` message constructed to have recursive elements without dept
 
 ---
 
-### [NEW] Protobuf Type Confusion
-**How it works:** If a server uses a loose decoder or is vulnerable to type-confusion during deserialization, an attacker might send a message with a different type than expected to trigger unintended code paths.
+## 💣 Attack Category 4: Protobuf Type Confusion
+**How it works:** Protobuf uses field tags (integers 1, 2, 3) instead of field names to deserialize data. If a client sends a message where a field tag corresponds to a string, but the server code uses a loose decoder (like converting protobuf directly to JSON without a strict schema) and interprets it as an array or a different object, it can bypass input validation.
+**Attack Execution:** Sending unexpected wire types (`VARINT` vs `LENGTH_DELIMITED`) to crash the parser, or exploiting dynamic message factories (`DynamicMessage`) that instantiate arbitrary types based on input.
+**`grep_search`:** `DynamicMessage.parseFrom`, `JsonFormat.parser()`.
 
-### [NEW] gRPC Smuggling (HTTP/2 over HTTP/1.1)
-**How it works:** Similar to HTTP Smuggling, but happens when a proxy decodes HTTP/2 (gRPC) and forwards it as HTTP/1.1 to a legacy back-end.
+---
 
-### [NEW] Unary vs Streaming Smuggling
-**How it works:** In gRPC, unary requests are treated as standard HTTP/2 streams. However, bi-directional streams can be kept open for a long time, allowing an attacker to smuggle multiple requests within a single long-lived stream if the backend proxy doesn't handle frame boundaries correctly.
+## 💣 Attack Category 5: gRPC Smuggling (HTTP/2 to HTTP/1.1)
+**How it works:** gRPC runs over HTTP/2. If an API Gateway or Reverse Proxy (e.g., an older Nginx or HAProxy) sits in front of the gRPC server and attempts to decode the HTTP/2 frames, it might misinterpret the gRPC headers (like `grpc-status` or trailers). 
+**Attack Execution:** An attacker smuggles a secondary request inside the gRPC data frame payload if the proxy improperly forwards the HTTP/2 stream as a chunked HTTP/1.1 request to a backend that expects REST.
+**`grep_search`:** `proxy_http_version 1.1;` mixed with `grpc_pass`.
+
+---
+
+## 💣 Attack Category 6: Unary vs Streaming Smuggling
+**How it works:** In gRPC, unary requests are treated as standard HTTP/2 streams. However, bi-directional streams can be kept open for a long time. 
+**Attack Execution:** If an attacker opens a bi-directional stream but sends malformed frame boundaries, poorly configured Envoy or Istio proxies might drop the authentication context but keep the stream open, allowing unauthenticated messages to reach the backend microservice.
+**`grep_search`:** `stream`, `BidiStreaming`.
 
 ---
 
@@ -90,6 +101,7 @@ A malicious `.proto` message constructed to have recursive elements without dept
 1. **Disable Reflection:** Never use `reflection.Register(s)` in production code. Use environmental flags.
 2. **Channel Security:** Always use `grpc.credentials.createSsl()` or rely on strict service mesh mTLS policies.
 3. **Payload Limits:** Configure `MAX_RECEIVE_MESSAGE_LENGTH`.
+4. **Proxy Config:** Ensure ingress gateways use native `grpc_pass` (HTTP/2 end-to-end) and do not downgrade to HTTP/1.1.
 
 ---
 
