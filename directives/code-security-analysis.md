@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v2.0 - Milestone: Hostile Architecture Synthesis
+# SOP: ShivaAi-Code-Auditor — v2.1 - Milestone: Hostile Architecture Synthesis
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.0 is the first major milestone — Hostile Architecture Synthesis. Core Doctrine carries 78 pillars. Vault is elite-depth hardened across all surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.1 introduces Web3 deepening and Log Tampering depth. Core Doctrine carries 79 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -573,6 +573,11 @@
     - **Tactic:** Submit `quantity: -10` or apply 20 coupons to reach total of $0.00. Check for `if total == 0: skip_payment` patterns.
     - **Integer overflow:** Financial values stored as `INT32` wrap around at 2,147,483,647 — verify `DECIMAL`/`NUMERIC` DB types.
     - **`grep_search`:** `quantity`, `amount`, `discount` in routes without `> 0` validation. `FLOAT` column types for monetary values. `if total == 0` or `if amount <= 0` pre-payment checks.
+
+79. **Advanced Web3/DApp Cryptographic Blindspots:** *(Added - upgrade v2.1)*
+    - DApps heavily rely on off-chain signatures (EIP-712). Applications often fail to validate the `nonce` or `chainID`, allowing signature replay across chains or multiple times on the same chain.
+    - **Tactic:** Inspect signature verification logic in the DApp backend or the smart contract interface. Check if frontend logic correctly handles Slippage Tolerances — hardcoded slippage can be exploited via sandwich attacks. Check IPFS rendering for XSS.
+    - **`grep_search`:** `signTypedData`, `ecrecover`, `slipage`, `chainID`, `ipfs://`.
 
 ## Exploratory Investigation Protocol (EIP)
 
