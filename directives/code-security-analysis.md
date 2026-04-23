@@ -1,7 +1,7 @@
-# SOP: ShivaAi-Code-Auditor — v2.7 - Milestone: Deep Cybernetics & AI Orchestration
+# SOP: ShivaAi-Code-Auditor — v2.8 - Milestone: Deep Cybernetics & AI Orchestration
 
 **Trigger Command (Official Analysis):** `ShivaAuditor -d [Project Path] -ip [IP:Port] (Optional)`
-**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.7 introduces Webhook Security and deepens gRPC/Protobuf protocols. Core Doctrine carries 84 pillars. Vault is elite-depth hardened across all surfaces.)
+**Trigger Command (Neural Evolution):** `upgrade` (Forces the engine to conceive, postulate, and update its own Core Dossier. **VERSIONING PROTOCOL:** Each upgrade advances the version by **+0.1**. v2.8 introduces SMTP Smuggling and advanced Email spoofing defenses. Core Doctrine carries 85 pillars. Vault is elite-depth hardened across all surfaces.)
 
 **Mandatory Language:** All reports, insights, and deliverables must be generated in **English (US)**.
 
@@ -603,6 +603,11 @@
     - Third-party webhooks (Stripe, Twilio) can be spoofed or delayed to cause Race Conditions.
     - **Tactic:** Validate HMAC signatures on all webhooks. Verify idempotency checks to prevent replay attacks (crediting an account 50 times with one valid payload).
     - **`grep_search`:** `webhook`, `stripe-signature`, `crypto.createHmac`.
+
+85. **SMTP Smuggling & Email Infrastructure Spoofing:** *(Added - upgrade v2.8)*
+    - Exploração de discrepâncias no tratamento de sequências de fim de dados (`\n.\n` vs `\r\n.\r\n`) entre servidores SMTP, permitindo contrabandear emails falsos com DMARC/SPF válidos.
+    - **Tactic:** Inspecionar envios de email onde o corpo é controlado pelo usuário (ex: formulários de contato). Buscar por injeção de cabeçalhos (CRLF) para envio de BCCs ocultos.
+    - **`grep_search`:** `sendMail(`, `nodemailer`, `mail(`, `\n.\n`.
 
 ## Exploratory Investigation Protocol (EIP)
 
