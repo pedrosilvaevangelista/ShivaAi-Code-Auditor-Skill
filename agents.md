@@ -20,8 +20,9 @@ This is the most critical document of the system. Knowing and working *within* t
 **The problem:** It is not possible to make real HTTP requests, see dynamic responses, or confirm behaviors at runtime.
 
 **The operational solution:**
-- For validations that *require* runtime confirmation (hash format, regex behavior, JWT structure), generate an **ephemeral Python script** in `.tmp/`, execute it via terminal, read the output, and discard the script. Never speculate on something that can be proven.
-- To confirm SQLi or LFI paths, the ephemeral script is your laboratory. Use it without hesitation.
+- **Mode Declaration:** Before starting the audit, declare whether you are in **Offline Mode** (only static code available) or **Hybrid Mode** (code + locally running application accessible via network).
+- **Hybrid Mode Tooling:** If in Hybrid Mode, generate an **ephemeral Python script** in `.tmp/` to execute real HTTP requests, confirm SQLi/LFI paths, or test JWT structures. Execute it via terminal, read the output, and discard the script. Never speculate on something that can be proven.
+- **Offline Mode Strictness:** If the target application is NOT running locally, DO NOT attempt to write HTTP request scripts to attack it (they will fail). Instead, you may only write scripts to test pure logic (e.g., regex behavior, hash cracking, offline algorithm testing).
 - When execution is not possible, be **explicitly transparent** in the report: mark the vulnerability as "Confirmed by Static Analysis" or "Requires Runtime Validation", maintaining the integrity of the analysis.
 
 ### Limitation 3 — Risk of Hallucination (Unanchored Analysis)
@@ -47,6 +48,29 @@ This is the most critical document of the system. Knowing and working *within* t
 - Before closing the analysis of any file, **explicitly note** (mentally via structured reasoning) which variables leave this file to where. Create a micro-graph of data flow.
 - Use `grep_search` to trace a specific variable or function throughout the *entire repository* before concluding that it is not used in a dangerous context.
 - For large projects, map the flows in order: External Inputs → Controllers/Routers → Services/Logic → Database/OS/File. Follow this backbone.
+- **NEW TRACKING RULE - The "Data Flow Ledger" Protocol:**
+  When tracking the flow of untrusted input across multiple files (e.g., Router -> Controller -> Service -> DB), you are **strictly forbidden** from jumping from one file to another merely mentally.
+  Before closing the analysis of one file and opening the next, you **must** generate a structured code block called `[DATA FLOW CHECKPOINT]`, documenting the exact state of the variable in your reasoning.
+  *Mandatory Example:*
+  ```yaml
+  [DATA FLOW CHECKPOINT]
+  - Source: req.body.email (received in routes/auth.js:15)
+  - Current File: controllers/UserController.js
+  - Transformations: Passed through validateEmail() (line 22). NO SQL sanitization detected.
+  - Next Destination: userService.createUser(email) in services/UserService.js
+  - Taint Status: DIRTY (Contaminated)
+  ```
+  Only after writing this block (it can be in your Chain of Thought or visible to the user) are you allowed to open the next file. This ensures your context is refreshed with the exact threat summary, preventing forgetfulness.
+
+### Limitation 6 — Lack of Architectural Map (The Blind Grep Problem)
+**The problem:** Jumping straight into vulnerability hunting (e.g., searching for `exec`) without understanding the project's macro architecture leads to chaotic analysis and loss of context.
+
+**The operational solution:**
+- **Phase 0 (Surface Mapping) is MANDATORY.** Before hunting for vulnerabilities, you must map the application's attack surface.
+- Step 1: Identify all entry points (Routers, Controllers, API definitions).
+- Step 2: Identify where the Authentication/Authorization Middleware is applied.
+- Step 3: Identify the Data Models/Schemas.
+- Only after outlining this "Treasure Map" are you allowed to start the Deep Dive phase hunting for specific sinks.
 
 ---
 
@@ -82,9 +106,23 @@ When `upgrade` is invoked, the flow is:
    - **Minor Increments:** Each `upgrade` execution MUST advance the version by **+0.1** (e.g., v1.0 -> v1.1).
    - **Major Jumps:** Jumps to a new major version (e.g., v1.x -> v2.0) are **STRICTLY FORBIDDEN** unless explicitly commanded by the USER.
 5. **Identify real gaps**: Based on the Rule of Depth, either identify existing files that need refactoring or (if they are perfect) identify new undocumented tactical domains.
-6. **Postulate** the improvements or new tactics with explicit reasoning.
-7. **Write** the improvements to the Doctrine and/or create/update tactical files in `security-vault/`.
-8. **Commit** to GitHub with a semantic message (`feat(upgrade vX.Y)` for version jumps, or `refactor(vault)` for depth improvements).
+6. **The Skepticism Rule (Anti-Hallucination Gate):**
+   Before adding any new tactic, attack vector, or bypass pattern to the Doctrine or the Vault, the engine MUST subject it to two logical tests:
+   - **The Real Evidence Test:** The AI **cannot** postulate a new vulnerability without citing real-world proof. If proposing a new tactic, you must be able to document a *functional PoC (Proof of Concept) Payload* or cite how it exists in practice (e.g., referring to real CVE patterns like Log4Shell, real Node.js behaviors, etc.). Purely philosophical vulnerabilities are rejected.
+   - **The False Positive Prevention Clause (Devil's Advocate):** For every new tactic added to the knowledge base, you MUST explicitly write a paragraph on "How not to report this as a False Positive". You must explain to yourself (your future version) what the identical *safe* behavior would look like, so that in the future you do not confuse a correct implementation with the described vulnerability.
+7. **Postulate** the improvements or new tactics with explicit reasoning (following the Anti-Hallucination Gate).
+8. **Write** the improvements to the Doctrine and/or create/update tactical files in `security-vault/`.
+9. **Commit** to GitHub with a semantic message (`feat(upgrade vX.Y)` for version jumps, or `refactor(vault)` for depth improvements).
+
+---
+
+## Chat Commands / Triggers
+
+When the user types specific commands in the chat, execute the corresponding actions:
+
+- **`help`**: Present a highly structured, professional, and concise guide on how to use the ShivaAi-Code-Auditor. Explain the available commands (like `ShivaAuditor`, `upgrade`), the difference between Offline and Hybrid modes, and what the user should expect from the analysis. Use tables and GitHub alerts for formatting.
+- **`upgrade`**: Trigger the Autonomous Evolution Cycle (as defined in the rules above).
+- **`ShivaAuditor -d [path]`**: Start the audit on the specified path following the Phase 0 and Deep Dive protocols.
 
 ---
 

@@ -31,19 +31,30 @@ To ensure maximum technical precision and depth of reasoning, use high-performan
 
 | Action | Command |
 | :--- | :--- |
+| **Engine Manual** | `help` |
 | **Standard Audit** | `ShivaAuditor -d [Project Path]` |
 | **Audit + Web Validation** | `ShivaAuditor -d [Project Path] -ip [ip:port]` |
-| **Neural Evolution (v2.0)** | `upgrade` (Milestone: Hostile Architecture Synthesis — 78 Pillars) |
+| **Autonomous Evolution** | `upgrade` |
 
 > [!TIP]
 > Detailed reports are automatically generated in `.md` format within the `reports/` folder.
 
 ---
 
+## 🛡️ Core Analytical Protocols
+
+To maintain high precision and avoid limitations, the engine operates under strict doctrines:
+
+* **Data Flow Ledger:** Mandatory structured tracking of variables across files (`[DATA FLOW CHECKPOINT]`) to prevent context loss during complex taint analysis.
+* **Anti-Hallucination Gate:** Every vulnerability claim must pass the *Real Evidence Test* (anchored in actual code or PoC) and the *False Positive Prevention Clause*.
+* **Execution Modes:** Clear distinction between **Offline Mode** (purely static) and **Hybrid Mode** (allows ephemeral script validation against running targets).
+
+---
+
 ## ⚠️ Development Warning & Risks
 
 > [!WARNING]
-> **Continuous Evolution:** New bypass tactics and exploits are regularly integrated into the doctrine.
+> **Autonomous Evolution & Rule of Depth:** The `upgrade` command adheres to strict versioning. The engine prioritizes refining existing intelligence (Rule of Depth) over accumulating new vectors blindly.
 >
 > **False Positive Management:** No static analysis is infallible. It is up to the senior auditor to:
 > - Validate the anchors and evidence provided.
