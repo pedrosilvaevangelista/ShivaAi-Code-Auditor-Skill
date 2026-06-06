@@ -1,7 +1,7 @@
 # IDOR & BOLA — Broken Object Level Authorization
 
 **Tags:** #high #idor #bola #unauthorized-access #api #access-control
-**OWASP:** A01:2021 Broken Access Control / API1:2023 BOLA
+**OWASP:** A01:2025 Broken Access Control / API1:2023 BOLA
 **CVSS Base:** 7.5 (High → access to other users' data without authentication)
 
 ---
@@ -141,6 +141,12 @@ GET /api/orders/1 HTTP/1.1
 Authorization: Bearer <my_token>
 # → If it returns another user's data = IDOR confirmed
 ```
+
+### [NEW] OWASP 2025 Scenario #1: Parameter Tampering
+**How it works:** The application uses unverified data in a call that accesses account information. An attacker simply modifies the browser's parameter (e.g. `?acct=123`) to send any desired account number.
+**Attack:**
+`https://example.com/app/accountInfo?acct=notmyacct`
+If not verified server-side against the authenticated session, the attacker accesses another user's account.
 
 ### IDOR in Hidden Parameters
 ```bash

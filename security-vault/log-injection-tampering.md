@@ -1,6 +1,10 @@
-# Forensic Anti-Recon (Log Injection/Tampering) — Tactical Pillar
+# Security Logging & Alerting Failures (Log Injection/Tampering)
 
-> **Context:** An attacker leverages application vulnerabilities not just to steal data, but to manipulate the forensic trail. This involves injecting false logs, erasing traces, triggering log overflow, or exploiting the logging parser itself to cover up malicious actions.
+> **Context:** Without logging, continuous monitoring, and alerting, breaches cannot be detected. Conversely, logging too much sensitive data or allowing attackers to inject logs compromises the forensic trail.
+
+**Tags:** #medium #logging #alerting #log-forging #log4shell #anti-forensics
+**OWASP:** A09:2025 Security Logging & Alerting Failures
+**CVSS Base:** 5.3 (Medium) — 9.8 (Critical → if Log4Shell RCE)
 
 ---
 
@@ -32,6 +36,11 @@
 - **Scenario:** The application logs large payloads indiscriminately on errors.
 - **Tactic:** Attacker sends massive payloads (e.g., 10MB JSON) in a loop to trigger errors.
 - **Detonation:** The disk fills up (`/var/log/`), causing a Denial of Service, or the excessive logging flushes out the actual attack logs through log rotation.
+
+## 6. [NEW] Alerting Failures & Missing Honeytokens (OWASP 2025 Focus)
+- **Scenario:** High-value transactions, failed logins, or internal enumeration trigger logs but **no alerts**, delaying breach response by years.
+- **Tactic (Honeytokens):** The application should inject "honeytokens" (fake users, fake API keys) into the database. Since they are never used in normal business, any access/login attempt using them generates an immediate high-priority alert with zero false positives.
+- **`grep_search`:** Search for SOC alerting integrations (e.g., PagerDuty, Slack webhooks) and verify if excessive 401/403s trigger them.
 
 ## Strategic Checklist
 1. [ ] Trace all paths where unfiltered user input reaches the logging engine.

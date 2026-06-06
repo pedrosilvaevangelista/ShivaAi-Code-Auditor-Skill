@@ -3,7 +3,7 @@
 > **Context:** Deserializing untrusted data is one of the few object-class vulnerabilities that guarantees RCE by design. The attack surface is the deserialization machinery itself, not the application logic.
 
 **Tags:** #critical #rce #deserialization #python #nodejs #php #java #dotnet
-**OWASP:** A08:2021 Software and Data Integrity Failures
+**OWASP:** A08:2025 Software or Data Integrity Failures
 **CVSS Base:** 9.8 (Critical — unauthenticated RCE)
 
 ---
@@ -94,6 +94,11 @@ The goal is to find a "gadget chain" — a sequence of method calls across trust
 - `CommonsCollections3.1`: Most common; exploits `InvokerTransformer`.
 - `Spring`: `DefaultListableBeanFactory`.
 - `JBoss`: Various chains in RichFaces/Seam.
+
+### [NEW] Java Deserialization Scenario (OWASP 2025 Scenario #4)
+**How it works:** A React application calls Spring Boot microservices. Developers serialize user state and pass it back and forth to ensure code is "immutable". 
+**Attack:** The attacker intercepts the state and notices the `rO0` (base64 for Java object magic bytes `AC ED 00 05`) signature. The attacker then uses the Java Deserialization Scanner or `ysoserial` to craft a payload and gain RCE on the server.
+**Fix:** Never accept serialized objects from untrusted sources. Use JSON or JWT for passing state.
 
 **Static detection priority:**
 ```java

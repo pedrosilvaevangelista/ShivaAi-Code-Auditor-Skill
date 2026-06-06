@@ -1,7 +1,7 @@
 # Business Logic Flaws
 
 **Tags:** #high #business-logic #idor #race-condition #flow
-**OWASP:** A04:2021 Insecure Design
+**OWASP:** A06:2025 Insecure Design
 **CVSS Base:** Variable → up to 9.8 (Critical → financial fraud, privilege escalation)
 
 ---

@@ -1,7 +1,7 @@
 # Authentication & Session Management
 
 **Tags:** #high #authentication #session #bruteforce #account-takeover
-**OWASP:** A07:2021 Identification and Authentication Failures
+**OWASP:** A07:2025 Authentication Failures
 **CVSS Base:** 7.5 (High) → 9.8 (Critical → complete bypass)
 
 ---
@@ -100,6 +100,11 @@ app.post('/logout', (req, res) => {
 ```
 
 **Impact:** a stolen JWT token still works even after "logout". A session cookie intercepted via XSS remains valid.
+
+### [NEW] Single Logout (SLO) Failures (OWASP 2025 Scenario #3)
+**How it works:** In SSO (Single Sign-On) environments, logging out of the current application (e.g., mail reader) does NOT log the user out of the central Identity Provider (IdP) or other connected apps (e.g., document system, chat).
+**Attack:** If a user on a shared computer clicks "Logout" and walks away, an attacker who sits at the computer can just click "Login" again and will be automatically re-authenticated without credentials, because the central SSO session was never destroyed.
+**Fix:** Implement and verify true Single Logout (SLO) protocols where the Service Provider (SP) notifies the IdP to terminate the global session.
 
 ---
 
@@ -252,6 +257,10 @@ No rate limit on /login + common password list → successful brute force
 Cookie without SameSite + privileged POST action → CSRF attack
 Session Fixation + link sent by email → automatic session hijacking via `req.session.id` manipulation.
 ```
+
+### [NEW] Hybrid Credential Stuffing / Password Spraying (OWASP 2025 Scenario #1)
+**How it works:** Attackers use lists of breached username/password combinations but dynamically adjust the passwords based on human behavior (e.g., incrementing 'Winter2025' to 'Winter2026', or 'ILoveMyDog6' to 'ILoveMyDog7'). This bypasses generic breached-password blocks.
+**Mitigation:** Application must implement multi-factor authentication (MFA) on all important systems and enforce robust brute-force/spraying protection at the edge (WAF/Rate limiting).
 
 ### [NEW] Shadow API Endpoints
 **How it works:** Undocumented routes (e.g., `/api/debug/v1`, `/internal/status`) that do not share the same authentication middleware as official routes.

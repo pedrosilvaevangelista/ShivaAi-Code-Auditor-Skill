@@ -1,7 +1,7 @@
 # Cryptography — Systemic Failures
 
 **Tags:** #high #cryptography #hashing #randomness #tls #secrets
-**OWASP:** A02:2021 Cryptographic Failures
+**OWASP:** A04:2025 Cryptographic Failures
 **CVSS Base:** 7.5 (High) — 9.1 (Critical — exposed private keys)
 
 ---
@@ -235,6 +235,10 @@ DES (56 bits)  BROKEN in hours
 3DES  BROKEN (SWEET32 attack  CVE-2016-2183)
 RSA-1024  INSECURE (breakable by nation-states)
 ```
+
+### [NEW] Post Quantum Cryptography (PQC) Readiness
+**OWASP 2025 Warning:** Current asymmetric algorithms (RSA, ECC, Diffie-Hellman) will be broken by Quantum Computers (Shor's algorithm). High-risk systems must migrate to NIST finalized PQC standards (e.g., FIPS 203 ML-KEM, FIPS 204 ML-DSA) no later than 2030.
+**Auditor check:** Does the system support quantum-resistant key exchange algorithms?
 
 ---
 

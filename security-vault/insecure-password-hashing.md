@@ -1,7 +1,7 @@
 # Insecure Password Hashing
 
 **Tags:** #high #hashing #password #rainbow-table #brute-force
-**OWASP:** A02:2021 Cryptographic Failures
+**OWASP:** A04:2025 Cryptographic Failures
 **CVSS Base:** 7.5 (High → credentials crackable in minutes with GPU)
 
 ---

@@ -1,7 +1,7 @@
 # XSS — Cross-Site Scripting
 
 **Tags:** #medium #high #xss #frontend #injection #javascript
-**OWASP:** A03:2021 Injection
+**OWASP:** A05:2025 Injection
 **CVSS Base:** 6.1 (Medium) — 8.8 (High — Stored XSS with no CSP)
 
 ---

@@ -1,7 +1,7 @@
 # Dependency Analysis by CVE
 
 **Tags:** #critical #cve #dependencies #supply-chain #vulnerable-versions
-**OWASP:** A06:2021 Vulnerable and Outdated Components
+**OWASP:** A03:2025 Software Supply Chain Failures / A06:2021 Vulnerable and Outdated Components
 **CVSS Base:** Variable → up to 10.0 (Log4Shell)
 
 ---

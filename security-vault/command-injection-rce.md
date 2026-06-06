@@ -1,7 +1,7 @@
 # Command Injection & RCE
 
 **Tags:** #critical #rce #command-injection #exec #injection
-**OWASP:** A03:2021 Injection
+**OWASP:** A05:2025 Injection
 **CVSS Base:** 10.0 (Maximum Critical → unauthenticated RCE)
 
 ---

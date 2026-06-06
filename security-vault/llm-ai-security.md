@@ -2,6 +2,10 @@
 
 > **Context:** Applications consuming Large Language Model (LLM) APIs (GPT, Gemini, Claude) introduce a new abstraction layer with unique vulnerabilities that traditional SAST scanners ignore.
 
+**Tags:** #critical #llm #prompt-injection #vibe-coding
+**OWASP:** LLM01:2025 Prompt Injection / X03:2025 Inappropriate Trust in AI Generated Code
+**CVSS Base:** Variable (Depends on integration depth)
+
 ---
 
 ## 1. Prompt Injection (Direct & Indirect)
@@ -51,6 +55,17 @@ Developers send sensitive data (PII, API keys) in the system prompt for "context
 Attacker sends inputs designed to maximize token consumption (e.g., "Repeat 'word' 10,000 times" or complex recursive logic).
 - **Audit Requirement:** Implementation of `max_tokens` and rate limits per user for LLM calls.
 - **`grep_search`:** Absence of `max_tokens` or `usage_limit`.
+
+---
+
+## 6. [NEW] Inappropriate Trust in AI Generated Code ("Vibe Coding")
+**OWASP X03:2025 Focus:** Writing and committing code almost entirely without human oversight, based on AI generation.
+- **The Risk:** AI models statistically reproduce common vulnerabilities from their training data (which includes vulnerable StackOverflow snippets). 
+- **Detection (Auditor focus):** If auditing a project developed via "Vibe Coding", assume high density of classic logical flaws, missing rate limits, and inadequate error handling.
+- **Mitigation:**
+  - Mandatory use of RAG (Retrieval Augmented Generation) fed with secure coding guidelines.
+  - Integration of MCP (Model Context Protocol) servers in the IDE to enforce static analysis checks *before* the AI commits code.
+  - Ban "Vibe Coding" for business-critical or cryptographic modules.
 
 ---
 

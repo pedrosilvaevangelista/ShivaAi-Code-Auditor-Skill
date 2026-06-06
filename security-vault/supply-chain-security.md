@@ -3,7 +3,7 @@
 > **Context:** Modern applications delegate trust to thousands of external dependencies. Attackers target the developer's own environment (registry, pipeline, CI/CD) to inject malicious code **before** it reaches the application. The vector is the build system itself.
 
 **Tags:** #critical #supply-chain #npm #pypi #ci-cd #dependency-confusion
-**OWASP:** A06:2021 Vulnerable & Outdated Components / A08:2021 Software & Data Integrity Failures
+**OWASP:** A03:2025 Software Supply Chain Failures / A06:2021 Vulnerable & Outdated Components
 **CVSS Base:** 9.8 (Critical — RCE in developer environment or production build)
 
 ---
@@ -116,6 +116,17 @@ env:
   PR_TITLE: ${{ github.event.pull_request.title }}
 run: echo "Building: $PR_TITLE"  # Now safe
 ```
+
+---
+
+## [NEW] 5. Self-Propagating Worms (OWASP 2025 Scenario #3)
+
+**The attack:** A malicious package uses a `postinstall` script not just to steal data, but to act as a worm. It detects NPM tokens (`~/.npmrc`) in the victim environment and automatically uses them to push malicious versions of any other accessible package the developer maintains.
+
+**Impact:** It turns the developer's machine into an infection vector, spreading rapidly across the ecosystem (e.g., the 2025 Shai-Hulud npm worm).
+
+**`grep_search`:**
+- Same as Malicious Lifecycle Scripts, but with extreme prejudice for network calls combined with local file reads of `~/.npmrc` or `.env`.
 
 ---
 

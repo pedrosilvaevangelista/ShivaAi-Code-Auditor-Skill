@@ -1,7 +1,7 @@
 # SQL Injection (SQLi)
 
 **Tags:** #critical #sqli #injection #web #backend
-**OWASP:** A03:2021 Injection
+**OWASP:** A05:2025 Injection
 **CVSS Base:** 9.8 (Critical — unauthenticated, no interaction required)
 
 ---
@@ -56,6 +56,15 @@ const users = await userRepository.query(`SELECT * FROM users WHERE name = '${na
 
 // [NEW] Sequelize - raw: true sometimes leads developers to skip parameterization
 const users = await User.findAll({ where: `id = ${id}`, raw: true });
+```
+
+### [NEW] ORM / HQL Injection (OWASP 2025 Scenario #2)
+**How it works:** Blind trust in frameworks like Hibernate. Using HQL with string concatenation allows bypassing filters.
+```java
+//  VULNERABLE (HQL Injection)
+Query HQLQuery = session.createQuery("FROM accounts WHERE custID='" + request.getParameter("id") + "'");
+// Attack: ' OR custID IS NOT NULL OR custID='
+// Bypasses the id filter and returns all accounts.
 ```
 
 ---
