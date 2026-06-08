@@ -70,7 +70,7 @@ The engine operates on a structure of synergetic layers:
 *   **Layer 1 (Doctrine):** Persistent memory in `directives/code-security-analysis.md`.
 *   **Layer 2 (AI Engine):** Real-time exploration and code correlation.
 *   **Layer 3 (Tooling):** Surgical and ephemeral validation scripts in `.tmp/`.
-*   **Layer 4 (Security Vault):** Strategic knowledge base (Obsidian Vault) for neural synchronization of attack vectors per stack.
+*   **Layer 4 (Security Vault):** Strategic knowledge base for neural synchronization of attack vectors per stack.
 
 ---
 

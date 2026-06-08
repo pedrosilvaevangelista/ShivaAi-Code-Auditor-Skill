@@ -120,9 +120,9 @@ When `upgrade` is invoked, the flow is:
 
 When the user types specific commands in the chat, execute the corresponding actions:
 
-- **`help`**: Present a highly structured, professional, and concise guide on how to use the ShivaAi-Code-Auditor. Explain the available commands (like `ShivaAuditor`, `upgrade`), the difference between Offline and Hybrid modes, and what the user should expect from the analysis. Use tables and GitHub alerts for formatting.
+- **`help`**: Present a highly structured, professional, and concise guide on how to use the ShivaAi-Code-Auditor. You MUST explicitly explain the Hybrid mode right away, and you MUST explain ALL available commands without exception. Use tables and GitHub alerts for formatting.
 - **`upgrade`**: Trigger the Autonomous Evolution Cycle (as defined in the rules above).
-- **`ShivaAuditor -d [path]`**: Start the audit on the specified path following the Phase 0 and Deep Dive protocols.
+- **`ShivaAuditor -d [path]`**: Start the audit on the specified path following the Phase 0 and Deep Dive protocols. Upon completion, you MUST automatically generate the final audit dossier and save it inside the `reports/` directory.
 
 ---
 
